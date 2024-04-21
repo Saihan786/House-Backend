@@ -2,37 +2,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dataclasses import dataclass
 
-@dataclass
-class Coordinate:
-    x: float
-    y: float
-
+# this makes a Graph with coordinates you can set
 class Graph:    
+    @dataclass
+    class Coordinate:
+        x: float
+        y: float
+
     def __init__(self):
         self.coordinates = []
         self.fig, self.ax = plt.subplots()
         x = np.linspace(0, 2, 100)  # Sample data.
 
-
-    def draw(self):
+    def __draw(self):
         point = plt.ginput(1)
         x = [p[0] for p in point]
         y = [p[1] for p in point]
         plt.plot(x,y)
         self.ax.figure.canvas.draw()
-        
-
-    lines = []
-    def draw_line(self):
-        ax = plt.gca()
-        xy = plt.ginput(2)
-
-        x = [p[0] for p in xy]
-        y = [p[1] for p in xy]
-        line = plt.plot(x,y)
-        ax.figure.canvas.draw()
-
-        self.lines.append(line)
         
     def __add_data_to_graph(self):
         xcoords = []
@@ -42,25 +29,24 @@ class Graph:
             ycoords.append(coord.y)
         self.ax.scatter(xcoords,ycoords)
         
+
+    def __setup_coords(self, coords: list[int]):        
+        self.coordinates = []
+        for x,y in zip(coords[0::2], coords[1::2]):
+            self.coordinates.append(self.Coordinate(x,y))
+        
+
     def showGraph(self):
         self.__add_data_to_graph()
-        self.draw()
-        plt.show()
+        self.__draw()
 
-    def addCoord(self, coordinate: Coordinate):
-        self.coordinates.append(coordinate)
+    def updateGraph(self):
+        plt.draw()
 
-    def setCoords(self, coordinates: list[Coordinate]):
-        self.coordinates = self.coordinates + coordinates
+    def setCoords(self, coordinates: list[int]):
+        self.__setup_coords(coordinates)
 
     def printCoords(self):
         print(self.coordinates)
-
-
-
-graph = Graph()
-coords = [Coordinate(1,2), Coordinate(1,5), Coordinate(1,46)]
-graph.setCoords(coords)
-graph.showGraph()
 
 
