@@ -1,1 +1,3 @@
-
+PROTOTYPE 4:
+* Geosets should be used to open and read a file containing map data (not yet real-time)
+* Geopandas should be used in order to plot to data on a map which we must be able to interact with (explore(), possibly)
