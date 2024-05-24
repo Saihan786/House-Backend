@@ -1,1 +1,10 @@
+PROTOTYPE 1:
+* be able to add stuff to a pandas dataframe
+* that's literally it
 
+* first be able to add literally anything to a graph (pandas dataframe)
+* then figure out how to make houses in terms of graph data
+* then put them on the axes by plotting
+* figure out how to plot with constraints: between the red line boundary lines, road/house constraints, entrance area
+* Self-drawing is just randomised plotting
+* at this point we can move on to Prototype 2, which is finding the optimal plot
