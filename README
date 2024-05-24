@@ -8,3 +8,11 @@ PROTOTYPE 1:
 * figure out how to plot with constraints: between the red line boundary lines, road/house constraints, entrance area
 * Self-drawing is just randomised plotting
 * at this point we can move on to Prototype 2, which is finding the optimal plot
+
+
+PROTOTYPE 4:
+* "RedLinePlot.py"
+* Call "makeEmptyMap()" to open a web page containing a world map (not yet real time)
+* Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
+* Call "openRLP()" with path to the .geojson file as a parameter to create a graph of the red line plot
+* All that's left for this prototype is to put it on a website, non-essential task
