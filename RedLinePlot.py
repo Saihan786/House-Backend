@@ -5,6 +5,10 @@ from folium.plugins import Draw
 import webbrowser
 import os
 
+# returns red line plot as geopandas dataframe using given path
+def getRLP(path_to_rlp):
+    return geopandas.read_file(path_to_rlp)
+
 # opens a graph using given path
 def openRLP(path_to_rlp):
     rlp = geopandas.read_file(path_to_rlp)
@@ -21,5 +25,6 @@ def makeEmptyMap():
 
 def main():
     path_to_rlp = "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/data.geojson"
-    makeEmptyMap()
+    # openRLP(path_to_rlp)
+    # makeEmptyMap()
 main()
