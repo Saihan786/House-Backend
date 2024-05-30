@@ -1,6 +1,7 @@
 from RedLinePlot import getRLP
 import matplotlib.pyplot as plt
-from shapely.geometry import Polygon, mapping
+from shapely.geometry import Polygon, LinearRing
+import geopandas
 
 # get the rlp (geodataframe containing geometry column which is just a dictionary with a mapping to the Polygon)
 path_to_rlp = "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/data.geojson"
@@ -10,27 +11,27 @@ rlp = getRLP(path_to_rlp)
 rlp = rlp.to_crs(epsg=27700)
 
 
+
+
 # grab coordinates which are rlp boundaries
+
+rlp.plot()
 polygon_metres = rlp.geometry[0]
-coords = polygon_metres.exterior.coords[:-1]
-coords.append((1,1))
-for x,y in coords:
-    print(x,y)
+oldcoords = polygon_metres.exterior.coords[:-1]
+print(oldcoords)
 
+newcoords = oldcoords
+newcoords.append((525000,194470))
+linearRing1 = LinearRing(newcoords)
+rlp["newgeo"] = linearRing1
+rlp = rlp.set_geometry("newgeo")
+rlp.plot()
+print(newcoords)
 
+plt.show()
+# newcoords = [(0,5),(1,1),(3,0)]
+# print(rlp)
 
-
-
-coords = [(1,1), (2,2), (3,3), (4,4)]
-newpoly = Polygon(coords)
-
-
-rlp["newgeo"] = newpoly
-print(rlp)
-rlp.set_geometry("newgeo")
-
-
-rlp.plot(column="newgeo")
 
 
 
