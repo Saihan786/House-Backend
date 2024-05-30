@@ -9,6 +9,12 @@ PROTOTYPE 1:
 * Self-drawing is just randomised plotting
 * at this point we can move on to Prototype 2, which is finding the optimal plot
 
+* I can add "houses" and "roads" to a plot (they're just Polygons).
+* Constraints can be moved to Prototype 2 and can be implemented in terms of overlapping equations and regions.
+* Finish Prototype 1 with randomised plotting for self-drawing, then move on to Protoype 2.
+* Prototype 1 itself lacks generalisation to any given data.geojson file (so for any red line plot), so that must be implemented with randomised plotting by making random Polygons relative to given coordinates.
+* CRS stuff is confusing.
+
 
 PROTOTYPE 4:
 * "RedLinePlot.py"
