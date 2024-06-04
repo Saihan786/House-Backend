@@ -1,4 +1,4 @@
-PROTOTYPE 1:
+PROTOTYPE 1 (COMPLETE):
 * be able to add stuff to a pandas dataframe
 * that's literally it
 
@@ -11,12 +11,26 @@ PROTOTYPE 1:
 
 * I can add "houses" and "roads" to a plot (they're just Polygons).
 * Constraints can be moved to Prototype 2 and can be implemented in terms of overlapping equations and regions.
-* Finish Prototype 1 with randomised plotting for self-drawing, then move on to Protoype 2.
-* Prototype 1 itself lacks generalisation to any given data.geojson file (so for any red line plot), so that must be implemented with randomised plotting by making random Polygons relative to given coordinates.
 * CRS stuff is confusing.
 
 
-PROTOTYPE 4:
+
+PROTOTYPE 2 (CURRENT):
+* Make lines representing the edges of the rlp
+* Use lines to generate random houses and roads, maybe with linspace, generalised to any data.geojson file
+* Implement constraints in random generation (straight roads, houses facing roads, and entry to rlp)
+
+
+
+PROTOTYPE 3:
+* Take user input for house and road basic constraints (like size, cost, shape, etc.)
+* Optimise on constraints for optimal ratio of houses and roads
+* Try to automate plotting of this on the rlp
+
+
+
+
+PROTOTYPE 4 (NEARLY COMPLETE):
 * "RedLinePlot.py"
 * Call "makeEmptyMap()" to open a web page containing a world map (not yet real time)
 * Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
