@@ -16,8 +16,8 @@ PROTOTYPE 1 (COMPLETE):
 
 
 PROTOTYPE 2 (CURRENT):
-* Make lines representing the edges of the rlp
-* Use lines to generate random houses and roads within the rlp, maybe with linspace, generalised to any data.geojson file
+* IN PROGRESS Make lines representing the edges of the rlp
+* Use lines to generate random houses and roads within the rlp, maybe with linspace, generalised to any data.geojson file (should already be generalised)
 * Implement constraints in random generation (straight roads, houses facing roads, and entry to rlp)
 
 
