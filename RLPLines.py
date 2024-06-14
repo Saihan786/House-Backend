@@ -79,66 +79,65 @@ def drawRegions(regions):
 # each region is bounded by a top line, a bottom line, and a range of x values
 # the range of x values represents the period in which both this top line and bottom line are used
 # whenever a new point is in the path of a line (so a new line begins), a new region will be described and added to the list
-plt.figure()
-
-start = 0
-x, y = 0, 1
-l, r = start+1, len(oldcoords) - 1
-xmin = xmax = oldcoords[start][x]
-
-# each region here is a tuple (equation for top line, equation for bottom line, xmin, xmax)
-regions = []
-
-cur = start
-lprev = rprev = start
-iter = 0
-while l<=r:
-    print(l, r)
-    topline = findLineFromTuples(oldcoords[lprev], oldcoords[l])
-    bottomline = findLineFromTuples(oldcoords[rprev], oldcoords[r])
-
-    if oldcoords[l][x] < oldcoords[r][x]:
-        xmax = oldcoords[l][x]
-        lprev = l
-        l+=1
-    else:
-        xmax = oldcoords[r][x]
-        rprev = r
-        r-=1
-
-    region = (topline, bottomline, xmin, xmax)
-    regions.append(region)
-
-    
-    
-    
-    xspace = np.linspace(xmin, xmax)
-    xmin = xmax
-    
-    # print(region)
 
 
-    # plt.plot(xspace, topline[0]*xspace + topline[1], label=iter)
-    # plt.plot(xspace, bottomline[0]*xspace + bottomline[1], label=iter)
-    # plt.legend()
+# @return regions which is an array of regions described by the range minimum and maximum x values of the region and the minimum
+#         and maximum y values (y values are described by lines)
+# each region is a tuple (equation for top line, equation for bottom line, xmin, xmax)
+def makeRegionsOfRLP():
+    plt.figure()
+
+    regions = []
+    start = 0
+    x, y = 0, 1
+
+    xmin = xmax = oldcoords[start][x]
+
+    l, r = start+1, len(oldcoords) - 1
+    lprev = rprev = start
+
+    iter = 0
+    while l<=r:
+        print(l, r)
+        boundaryLine1 = findLineFromTuples(oldcoords[lprev], oldcoords[l])
+        boundaryLine2 = findLineFromTuples(oldcoords[rprev], oldcoords[r])
+
+        if oldcoords[l][x] < oldcoords[r][x]:
+            xmax = oldcoords[l][x]
+            lprev = l
+            l+=1
+        else:
+            xmax = oldcoords[r][x]
+            rprev = r
+            r-=1
+
+        region = (boundaryLine1, boundaryLine2, xmin, xmax)
+        regions.append(region)
+
+        xspace = np.linspace(xmin, xmax)
+        xmin = xmax
+        
+        # print(region)
 
 
-    # if iter==1 : break
+        plt.plot(xspace, boundaryLine1[0]*xspace + boundaryLine1[1], label=iter)
+        plt.plot(xspace, boundaryLine2[0]*xspace + boundaryLine2[1], label=iter)
+        plt.legend()
+
+        # if iter==1 : break
+
+        iter+=1
+        # break
+        print("next", l, r)
+
+    return regions
 
 
-    iter+=1
-    # break
-    print("next", l, r)
-
-print()
-print()
-print()
 
 
+
+regions = makeRegionsOfRLP()
 drawRegions(regions)
-
-
-
 
 
 plt.show()
