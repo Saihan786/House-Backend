@@ -4,6 +4,10 @@ from shapely.geometry import Polygon, LinearRing
 import geopandas
 
 
+# TODO: Clean this class so it has the clear functionality of being able to add new coordinates or just to grab the RLP coordinates as an array
+
+
+
 
 # @param coord1 and coord2 are both tuples of x and y coordinate values
 # @return coordinate that is:
@@ -45,7 +49,7 @@ rlpboundarycoords.append(createExternalCoord(rlpboundarycoords[0], rlpboundaryco
 # (maybe eventually put into gdf, I don't see the benefit of this now besides showing the rlp in context, possibly could label the shapes like boundary, house1, road1, etc.)
 rlpboundary = LinearRing(rlpboundarycoords)
 house1 = Polygon([(524924.2,194488.9), (524924.2, 194500), (524940.2, 194500), (524940.2, 194488.9), (524924.2,194488.9)])
-rlp_with_house = geopandas.GeoSeries([rlpboundary])
+rlp_without_house = geopandas.GeoSeries([rlpboundary])
 
 
 squarecoords = [(5,5), (11,10), (12,8), (6,0)]
@@ -67,5 +71,5 @@ def rlpAsRing():
     return LinearRing(oldcoords)
 
 # rlp.plot()
-# rlp_with_house.plot()
+# rlp_without_house.plot()
 plt.show()

@@ -83,7 +83,7 @@ def drawRegions(regions):
 
 # @return regions which is an array of regions described by the range minimum and maximum x values of the region and the minimum
 #         and maximum y values (y values are described by lines)
-# each region is a tuple (equation for top line, equation for bottom line, xmin, xmax)
+# each region is a tuple (equation for boundary line, equation for other boundary line, xmin, xmax)
 def makeRegionsOfRLP():
     plt.figure()
 
@@ -137,7 +137,51 @@ def makeRegionsOfRLP():
 
 
 regions = makeRegionsOfRLP()
-drawRegions(regions)
+# drawRegions(regions)
+
+
+
+
+
+
+
+# Used to plot points, not shapes representing houses
+# I won't be using linspace in the final product because it generates evenly distributed numbers, but rather I'll have my own points
+def populateRegions(regions):
+    plt.figure()
+    
+    # regions is a list such that [ (equation for boundary line, equation for other boundary line, xmin, xmax) ]
+    for region in regions:
+        m1, c1 = region[0]
+        m2, c2 = region[1]
+        
+        xmin = region[2]
+        xmax = region[3]
+        xspace = np.linspace(xmin, xmax, num=5)[1:-1]
+        print(xspace)
+
+        for xval in xspace:
+            # there should be a set of y values for every x value
+            # the y value should be between the boundary lines
+            yspace = np.linspace(xval*m1 + c1, xval*m2 + c2, num=5)[1:-1]
+            print(yspace)
+            print()
+            print()
+
+            for yval in yspace:
+                plt.plot(xval, yval, 'ro')
+populateRegions(regions)
+
+
+
+
+
+
+
+
+
+
+
 
 
 plt.show()
