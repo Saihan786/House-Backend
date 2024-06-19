@@ -1,24 +1,16 @@
-PROTOTYPE 1 (COMPLETE):
-* be able to add stuff to a pandas dataframe
-* that's literally it
-
-* first be able to add literally anything to a graph (pandas dataframe)
-* then figure out how to make houses in terms of graph data
-* then put them on the axes by plotting
-* figure out how to plot with constraints: between the red line boundary lines, road/house constraints, entrance area
-* Self-drawing is just randomised plotting
-* at this point we can move on to Prototype 2, which is finding the optimal plot
-
-* I can add "houses" and "roads" to a plot (they're just Polygons).
-* Constraints can be moved to Prototype 2 and can be implemented in terms of overlapping equations and regions.
-* CRS stuff is confusing.
-
+PROTOTYPE 1 (CURRENT):
+* TODO Allow user to create classes for different types of houses and roads, where each class has distinct properties (house (rectangle) - profit (revenue-cost implied), size, length, width) (roads - cost, width)
 
 
 PROTOTYPE 2 (CURRENT):
-* IN PROGRESS Make lines representing the edges of the rlp
-* Use lines to generate random houses and roads within the rlp, maybe with linspace, generalised to any data.geojson file (should already be generalised)
-* Implement constraints in random generation (straight roads, houses facing roads, and entry to rlp)
+* DONE Find way to ensure houses and roads stay within rlp
+* TODO Implement constraints (straight roads, houses facing roads, and entry to rlp)
+* TODO Generate houses and roads to be plotted within rlp:
+    * (already generalised to any data.geojson file)
+    * Use house types and road types from Prototype 1
+    * Optimise for total profit against total cost of generation for any given generation (should return multiple possible generations)
+* TODO Attempt to plot generation within rlp adhering to the constraints I've implemented by then, use a different generation if it's not possible
+    * Every attempt that the computer makes to plot a generation is randomised, or all attempts are exhaustive (might not be feasible, so might do random attempts for a given time period until it declares failure)
 
 
 
