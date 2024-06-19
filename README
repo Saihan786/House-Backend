@@ -1,5 +1,7 @@
 PROTOTYPE 1 (CURRENT):
-* DONE Allow user to create classes for different types of houses and roads, where each class has distinct properties (house (rectangle) - profit (revenue-cost implied), size, length, width) (roads - cost, width)
+* TODO Allow user to create classes for different types of houses and roads, where each class has distinct properties:
+    * houses (rectangle) - name, profit, width, length, size
+    * roads              - name, cost, width
 * Problem with curved roads
 
 
