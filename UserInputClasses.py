@@ -38,3 +38,10 @@ class RoadTypes():
 
     def getRoadTypes(self):
         return self.roadTypes
+    
+
+
+def generateOptimalTypes(budget):
+    # maximise profit from houses
+    # this won't ever generate roads as it is (because roads have no costs), how can I ensure constraints apply here even before implementing them?
+    pass
