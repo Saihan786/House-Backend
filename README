@@ -11,9 +11,15 @@ PROTOTYPE 2 (CURRENT):
     * (already generalised to any data.geojson file)
     * Use house types and road types from Prototype 1
     * Optimise for total profit against total cost of generation for any given generation (should return multiple possible generations)
-* TODO Implement constraints (straight roads, houses facing roads, no overlapping of course, and entry to rlp)
+* TODO Implement constraints (straight roads, houses facing roads, no overlapping of course (could use contains/within method here), and entry to rlp)
 * TODO Attempt to plot generation within rlp adhering to the constraints I've implemented by then, use a different generation if it's not possible
     * Every attempt that the computer makes to plot a generation is randomised, or all attempts are exhaustive (might not be feasible, so might do random attempts for a given time period until it declares failure)
+
+
+
+PROTOTYPE 2 GENERATE
+*plot houses and roads as well
+
 
 
 

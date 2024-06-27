@@ -9,13 +9,13 @@ rlp = rlp.to_crs(epsg=27700)
 rlp["name"] = ["rlp"]
 rlppolygon = rlp.geometry[0]
 
-oblong = Polygon( [(510000,180000), (510100,185100), (510150, 185050), (510000,185000)] )
+oblong = Polygon( [(524989,194467), (524995,194467), (524989,194430), (524989,194467)] )
 
 ax = rlp.plot(facecolor="grey")
 geopandas.GeoSeries(oblong).plot(ax=ax, facecolor="red")
 
-print(oblong.within(rlppolygon))
-print(rlppolygon.contains(oblong))
+# print(oblong.within(rlppolygon))
+# print(rlppolygon.contains(oblong))
 
 
 
