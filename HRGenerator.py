@@ -66,19 +66,26 @@ class ManageRoadTypes():
     
 
 
-
-# basic constraint of total cost being within budget and maximising profit and being within rlp size
+# I want this function to return a list of the most optimal solutions
+# basic constraints of total cost being within budget, maximising profit, and being within rlp size
 # def generateOptimalTypes(housetypes, roadtypes, budget, maxsize):
 def generateOptimalTypes():
     unitroadlength = 1    # in metres
     
-    # so for two housetypes, h1 and h2 (x1, x2), and two road types, r1 and r2 (y1, y2)     (revenues are 1,2 and costs are 1,2,3,4):
+    # so for two housetypes, h1 and h2 (x1, x2), and two road types, r1 and r2 (y1, y2)     (revenues are 10,15 and costs are 5,7,10,12):
     #       maximise P = h1.revenue*x1 + h2.revenue*x2
     #       y1 + y2 >= x1 + x2
     #       h1.cost*x1 + h2.cost*x2 + r1.cost*y1 + r2.cost*y2 <= budget
     #       h1.size*x1 + h2.size*x2   +   r1.width*unitroadlength*y1 + r2.width*unitroadlength*y2 <= maxsize
     #       x1 + x2 >= 0
     #       y1 + y2 >= 0
+
+    
+        #   maximise P = 10*x1 + 15*x2
+        #   y1 + y2 >= x1 + x2
+        #   5*x1 + 7*x2 + 10*y1 + 12*y2 <= budget
+        #   9*x1 + 25*x2   +   5*y1 + 8*y2 <= maxsize
+        #   x1,x2,y1,y2 >= 0
 
     
 
@@ -94,7 +101,6 @@ def generateOptimalTypes():
 
     # maximise P = 
     manageht.printHouseTypes()
-    managert.printRoadTypes()
     
 
 
