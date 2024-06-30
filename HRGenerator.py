@@ -67,55 +67,108 @@ class ManageRoadTypes():
 
 
 # I want this function to return a list of the most optimal solutions
-# basic constraints of total cost being within budget, maximising profit, and being within rlp size
+# objective function is to maximise profit
+# basic constraints of total cost being within budget and being within rlp size
 # def generateOptimalTypes(housetypes, roadtypes, budget, maxsize):
 def generateOptimalTypes():
-    unitroadlength = 1    # in metres
+    # housetypes = [ (name, revenue, cost, width, length, size) ]
+    # variables of objective function and constraint x,y,z,etc. are equivalent to the quantity of a house type
+    # objective function which is maximise P = revenue_ht1*x + revenue_ht2*y + ... (only for houses)
+    #       additional constraint formulas include: cost_ht1*x + ... <= budget
+    #                                               size_ht1*x + ... <= maxsize
+    #                                               allhouses >= 0,
     
-    # so for two housetypes, h1 and h2 (x1, x2), and two road types, r1 and r2 (y1, y2)     (revenues are 10,15 and costs are 5,7,10,12):
+
+
+
+
+
+
+
+
+
+    # This example shows two lines that do NOT intersect as the budget is that much higher.
+    
+    # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 12):
     #       maximise P = h1.revenue*x1 + h2.revenue*x2
-    #       y1 + y2 >= x1 + x2
-    #       h1.cost*x1 + h2.cost*x2 + r1.cost*y1 + r2.cost*y2 <= budget
-    #       h1.size*x1 + h2.size*x2   +   r1.width*unitroadlength*y1 + r2.width*unitroadlength*y2 <= maxsize
-    #       x1 + x2 >= 0
-    #       y1 + y2 >= 0
+    #       h1.cost*x1 + h2.cost*x2 <= budget
+    #       h1.size*x1 + h2.size*x2  <= maxsize
+    #       x1, x2 >= 0    
+    # maximise P = 10*x1 + 15*x2
+    # 5*x1 + 7*x2 <= 1000
+    # 9*x1 + 12*x2 <= 500
+    # x1, x2 >= 0
+
+
+
+    # This example shows two lines that DO intersect as the c values are close, but max size of one ht is small.
+    
+    # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 4):
+    #       maximise P = h1.revenue*x1 + h2.revenue*x2
+    #       h1.cost*x1 + h2.cost*x2 <= budget
+    #       h1.size*x1 + h2.size*x2  <= maxsize
+    #       x1, x2 >= 0    
+    # maximise P = 10*x1 + 15*x2
+    # 5*x1 + 7*x2 <= 500
+    # 9*x1 + 4*x2 <= 500
+    # x1, x2 >= 0
+
+    # draw as linear programming since only two variables now
+    # if constraint lines don't intersect, then only one type of house will be selected for this example
+    # intersecting constraint lines represent similar c values, mostly (y=mx+c)
+    #       if a line has a much smaller c value, it means it has relatively smaller size/money to work with
+    #       so this would be the top priority (i.e. focus on house types that mitigate this)
+
+
+
 
     
-        #   maximise P = 10*x1 + 15*x2
-        #   y1 + y2 >= x1 + x2
-        #   5*x1 + 7*x2 + 10*y1 + 12*y2 <= budget
-        #   9*x1 + 25*x2   +   5*y1 + 8*y2 <= maxsize
-        #   x1,x2,y1,y2 >= 0
+    # This example will be for three housetypes, so three lines, inshaallah.
 
-    
+    # maximise P = 10*x1 + 15*x2 + 13*x3
+    # 5*x1 + 7*x2 + 6*x3 <= 500
+    # 9*x1 + 12*x2 + 2*x3 <= 500
+    # x1, x2, x3 >= 0
+
+    # simplex required
 
 
     
     manageht = ManageHouseTypes()
     manageht.addNewHouseType(name="housetype1", revenue=10, cost=5, width=3, length=3)
-    manageht.addNewHouseType(name="housetype2", revenue=15, cost=7, width=5, length=5)
-
-    managert = ManageRoadTypes()
-    managert.addNewRoadType(name="roadtype1", cost=10, width=5)
-    managert.addNewRoadType(name="roadtype2", cost=12, width=8)
+    manageht.addNewHouseType(name="housetype2", revenue=15, cost=7, width=2, length=2)
 
     # maximise P = 
     manageht.printHouseTypes()
     
 
 
-
+    
 
 
     
-    # housetypes = [ (name, revenue, cost, width, length, size) ]
-    # roadtypes = [ (name, cost, width) ]
-    # variables of objective function and constraint x,y,z,etc. are equivalent to the quantity of a house/road type
-    # objective function which is maximise P = revenue_ht1*x + revenue_ht2*y + ... (only for houses)
-    #       additional constraint formulas include: sum(allroads) >= sum(allhouses),
-    #                                               cost_ht1*x + ... <= budget
-    #                                               size_ht1*x + width_rt1*unitroadlength*y <= maxsize
-    #                                               sum(allroads) >= 0,
-    #                                               sum(allhouses) >= 0,
 
-generateOptimalTypes()
+# generateOptimalTypes()
+
+
+# import scipy.optimize as opt
+
+# # Coefficients of the objective function
+# c = [-10, -15, -13]  # Note: maximize 10x1 + 15x2 + 13x3 is the same as minimize -10x1 - 15x2 - 13x3
+
+# # Coefficients of the inequality constraints
+# A = [
+#     [5, 7, 6],
+#     [9, 12, 2]
+# ]
+
+# # Right-hand side of the inequality constraints
+# b = [500, 500]
+
+# # Bounds for variables x1, x2, x3
+# x_bounds = (0, None)
+# bounds = [x_bounds, x_bounds, x_bounds]
+
+# # Solve the linear programming problem
+# result = opt.linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='highs')
+# print(result)
