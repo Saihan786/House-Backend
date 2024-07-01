@@ -1,3 +1,5 @@
+import scipy.optimize as opt
+
 # House Road Generator
 # Primary function of this class is to generate the numbers of houses and roads of each type to optimise to profit and cost
 
@@ -71,22 +73,17 @@ class ManageRoadTypes():
 # basic constraints of total cost being within budget and being within rlp size
 # def generateOptimalTypes(housetypes, roadtypes, budget, maxsize):
 def generateOptimalTypes():
+    # ------------------------------------------------------------------------------------------------------------------------
     # housetypes = [ (name, revenue, cost, width, length, size) ]
     # variables of objective function and constraint x,y,z,etc. are equivalent to the quantity of a house type
     # objective function which is maximise P = revenue_ht1*x + revenue_ht2*y + ... (only for houses)
     #       additional constraint formulas include: cost_ht1*x + ... <= budget
     #                                               size_ht1*x + ... <= maxsize
     #                                               allhouses >= 0,
+    # ------------------------------------------------------------------------------------------------------------------------
     
 
-
-
-
-
-
-
-
-
+    # ------------------------------------------------------------------------------------------------------------------------
     # This example shows two lines that do NOT intersect as the budget is that much higher.
     
     # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 12):
@@ -98,9 +95,10 @@ def generateOptimalTypes():
     # 5*x1 + 7*x2 <= 1000
     # 9*x1 + 12*x2 <= 500
     # x1, x2 >= 0
+    # ------------------------------------------------------------------------------------------------------------------------
 
 
-
+    # ------------------------------------------------------------------------------------------------------------------------
     # This example shows two lines that DO intersect as the c values are close, but max size of one ht is small.
     
     # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 4):
@@ -112,18 +110,24 @@ def generateOptimalTypes():
     # 5*x1 + 7*x2 <= 500
     # 9*x1 + 4*x2 <= 500
     # x1, x2 >= 0
+    # ------------------------------------------------------------------------------------------------------------------------
 
+
+
+    # ------------------------------------------------------------------------------------------------------------------------
     # draw as linear programming since only two variables now
     # if constraint lines don't intersect, then only one type of house will be selected for this example
     # intersecting constraint lines represent similar c values, mostly (y=mx+c)
     #       if a line has a much smaller c value, it means it has relatively smaller size/money to work with
     #       so this would be the top priority (i.e. focus on house types that mitigate this)
+    # ------------------------------------------------------------------------------------------------------------------------
 
 
 
 
     
-    # This example will be for three housetypes, so three lines, inshaallah.
+    # ------------------------------------------------------------------------------------------------------------------------
+    # This example will be for three housetypes, so three lines in three dimensions, inshaallah.
 
     # maximise P = 10*x1 + 15*x2 + 13*x3
     # 5*x1 + 7*x2 + 6*x3 <= 500
@@ -131,44 +135,27 @@ def generateOptimalTypes():
     # x1, x2, x3 >= 0
 
     # simplex required
+    # ------------------------------------------------------------------------------------------------------------------------
 
 
-    
     manageht = ManageHouseTypes()
     manageht.addNewHouseType(name="housetype1", revenue=10, cost=5, width=3, length=3)
     manageht.addNewHouseType(name="housetype2", revenue=15, cost=7, width=2, length=2)
 
-    # maximise P = 
-    manageht.printHouseTypes()
     
+generateOptimalTypes()
 
 
-    
 
+obj_coeffs = [-1, -2, -6]
+inequality_coeffs = [
+    [0,1,2],
+    [2,1,4],
+    [-1, .5, 3]
+]
+inequality_values = [24, 28, 22]
 
-    
-
-# generateOptimalTypes()
-
-
-# import scipy.optimize as opt
-
-# # Coefficients of the objective function
-# c = [-10, -15, -13]  # Note: maximize 10x1 + 15x2 + 13x3 is the same as minimize -10x1 - 15x2 - 13x3
-
-# # Coefficients of the inequality constraints
-# A = [
-#     [5, 7, 6],
-#     [9, 12, 2]
-# ]
-
-# # Right-hand side of the inequality constraints
-# b = [500, 500]
-
-# # Bounds for variables x1, x2, x3
-# x_bounds = (0, None)
-# bounds = [x_bounds, x_bounds, x_bounds]
-
-# # Solve the linear programming problem
-# result = opt.linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='highs')
-# print(result)
+# Solve the linear programming problem
+result = opt.linprog(obj_coeffs, A_ub=inequality_coeffs, b_ub=inequality_values, method='highs')
+print(result.x)
+print(-1*result.fun)
