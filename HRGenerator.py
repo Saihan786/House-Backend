@@ -68,94 +68,40 @@ class ManageRoadTypes():
     
 
 
-# I want this function to return a list of the most optimal solutions
-# objective function is to maximise profit
-# basic constraints of total cost being within budget and being within rlp size
-# def generateOptimalTypes(housetypes, roadtypes, budget, maxsize):
-def generateOptimalTypes():
-    # ------------------------------------------------------------------------------------------------------------------------
-    # housetypes = [ (name, revenue, cost, width, length, size) ]
-    # variables of objective function and constraint x,y,z,etc. are equivalent to the quantity of a house type
-    # objective function which is maximise P = revenue_ht1*x + revenue_ht2*y + ... (only for houses)
-    #       additional constraint formulas include: cost_ht1*x + ... <= budget
-    #                                               size_ht1*x + ... <= maxsize
-    #                                               allhouses >= 0,
-    # ------------------------------------------------------------------------------------------------------------------------
+# returns resulting proportions of housetypes and profit achieved using simplex to maximise the profit
+def simplexmax(revenues, costs, sizes, budget, maxsize):
+    objective = [-1*x for x in revenues]
+    ineq_coeffs = [costs] + [sizes]
+    ineq_values = [budget, maxsize]
+
+    result = opt.linprog(objective, A_ub=ineq_coeffs, b_ub=ineq_values)
+    return (result.x, -1*result.fun)
+
+def printResults(proportions, profit, names):
+    print("The optimal solution is to have: ")
+    for i in range(len(proportions)):
+        print("     ", proportions[i], "houses of housetype", names[i])
+    print("The total profit is", profit, "pounds.")
+
+# Objective function is to maximise profit
+# Basic constraints of total cost are to be within budget and to be within rlp size
+def generateOptimalTypes(housetypes, budget=500, maxsize=500):
+    NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
+    names, revenues, costs, sizes = [], [], [], []
+
+    for housetype in housetypes:
+        names.append(housetype[NAME])
+        revenues.append(housetype[REVENUE])
+        costs.append(housetype[COST])
+        sizes.append(housetype[SIZE])
     
-
-    # ------------------------------------------------------------------------------------------------------------------------
-    # This example shows two lines that do NOT intersect as the budget is that much higher.
-    
-    # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 12):
-    #       maximise P = h1.revenue*x1 + h2.revenue*x2
-    #       h1.cost*x1 + h2.cost*x2 <= budget
-    #       h1.size*x1 + h2.size*x2  <= maxsize
-    #       x1, x2 >= 0    
-    # maximise P = 10*x1 + 15*x2
-    # 5*x1 + 7*x2 <= 1000
-    # 9*x1 + 12*x2 <= 500
-    # x1, x2 >= 0
-    # ------------------------------------------------------------------------------------------------------------------------
+    (proportions, profit) = simplexmax(revenues, costs, sizes, budget, maxsize)
+    printResults(proportions, profit, names)
 
 
-    # ------------------------------------------------------------------------------------------------------------------------
-    # This example shows two lines that DO intersect as the c values are close, but max size of one ht is small.
-    
-    # so for two housetypes, h1 and h2 (x1, x2) (revenues are 10,15 costs are 5,7, sizes are 9, 4):
-    #       maximise P = h1.revenue*x1 + h2.revenue*x2
-    #       h1.cost*x1 + h2.cost*x2 <= budget
-    #       h1.size*x1 + h2.size*x2  <= maxsize
-    #       x1, x2 >= 0    
-    # maximise P = 10*x1 + 15*x2
-    # 5*x1 + 7*x2 <= 500
-    # 9*x1 + 4*x2 <= 500
-    # x1, x2 >= 0
-    # ------------------------------------------------------------------------------------------------------------------------
-
-
-
-    # ------------------------------------------------------------------------------------------------------------------------
-    # draw as linear programming since only two variables now
-    # if constraint lines don't intersect, then only one type of house will be selected for this example
-    # intersecting constraint lines represent similar c values, mostly (y=mx+c)
-    #       if a line has a much smaller c value, it means it has relatively smaller size/money to work with
-    #       so this would be the top priority (i.e. focus on house types that mitigate this)
-    # ------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-    
-    # ------------------------------------------------------------------------------------------------------------------------
-    # This example will be for three housetypes, so three lines in three dimensions, inshaallah.
-
-    # maximise P = 10*x1 + 15*x2 + 13*x3
-    # 5*x1 + 7*x2 + 6*x3 <= 500
-    # 9*x1 + 12*x2 + 2*x3 <= 500
-    # x1, x2, x3 >= 0
-
-    # simplex required
-    # ------------------------------------------------------------------------------------------------------------------------
-
-
-    manageht = ManageHouseTypes()
-    manageht.addNewHouseType(name="housetype1", revenue=10, cost=5, width=3, length=3)
-    manageht.addNewHouseType(name="housetype2", revenue=15, cost=7, width=2, length=2)
-
-    
-generateOptimalTypes()
-
-
-
-obj_coeffs = [-1, -2, -6]
-inequality_coeffs = [
-    [0,1,2],
-    [2,1,4],
-    [-1, .5, 3]
-]
-inequality_values = [24, 28, 22]
-
-# Solve the linear programming problem
-result = opt.linprog(obj_coeffs, A_ub=inequality_coeffs, b_ub=inequality_values, method='highs')
-print(result.x)
-print(-1*result.fun)
+mht = ManageHouseTypes()
+mht.addNewHouseType("ht1", 10, 12, 5, 5)
+mht.addNewHouseType("ht2", 11, 12, 5, 5)
+mht.addNewHouseType("ht3", 16, 2, 2, 3)
+mht.addNewHouseType("ht4", 80, 15, 9, 9)
+generateOptimalTypes(mht.getHouseTypes())
