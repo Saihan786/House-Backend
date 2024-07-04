@@ -2,6 +2,11 @@ import scipy.optimize as opt
 
 # House Road Generator
 # Primary function of this class is to generate the numbers of houses and roads of each type to optimise to profit and cost
+# TODO:
+#   number of bedrooms constraint
+#   max number of units constraint
+#   remove budget constraint
+#   other constraints from Dan
 
 class ManageHouseTypes():
     houseTypes = []
@@ -40,34 +45,6 @@ class ManageHouseTypes():
         print()
 
 
-class ManageRoadTypes():
-    def __init__(self) -> None:
-        self.NAME=0
-        self.COST=1
-        self.WIDTH=2
-        self.roadTypes = []
-
-    def userAddNewRoadType(self):
-        name = input("Enter the name of this house type: ")
-        cost = input("Enter the cost in pounds of one house of this house type: ")
-        width = input("Enter the width in metres of one house of this house type: ")
-
-        self.roadTypes.append( (name, cost, width) )
-
-    def addNewRoadType(self, name, cost, width):
-        self.roadTypes.append( (name, cost, width) )
-
-
-    def getRoadTypes(self):
-        return self.roadTypes
-
-    def printRoadTypes(self):
-        for roadtype in self.roadTypes:
-            print("There is a roadtype called", roadtype[self.NAME], "which costs", roadtype[self.COST], "pounds and has a width of", roadtype[self.WIDTH], "metres")
-        print()
-    
-
-
 # returns resulting proportions of housetypes and profit achieved using simplex to maximise the profit
 def simplexmax(revenues, costs, sizes, budget, maxsize):
     objective = [-1*x for x in revenues]
@@ -95,13 +72,16 @@ def generateOptimalTypes(housetypes, budget=500, maxsize=500):
         costs.append(housetype[COST])
         sizes.append(housetype[SIZE])
     
-    (proportions, profit) = simplexmax(revenues, costs, sizes, budget, maxsize)
+    (proportions, profit) = simplexmax(revenues, costs, sizes, 10000000000, 1500)
     printResults(proportions, profit, names)
 
 
-mht = ManageHouseTypes()
-mht.addNewHouseType("ht1", 10, 12, 5, 5)
-mht.addNewHouseType("ht2", 11, 12, 5, 5)
-mht.addNewHouseType("ht3", 16, 2, 2, 3)
-mht.addNewHouseType("ht4", 80, 15, 9, 9)
-generateOptimalTypes(mht.getHouseTypes())
+
+def examples():
+    mht = ManageHouseTypes()
+    mht.addNewHouseType("ht1", 100000, 0, 5, 16)
+    mht.addNewHouseType("ht2", 150000, 0, 5, 17)
+    mht.addNewHouseType("ht3", 175000, 0, 5, 18)
+    mht.addNewHouseType("ht4", 200000, 0, 97, 1)
+    mht.addNewHouseType("ht5", 215000, 0, 1, 101)
+    generateOptimalTypes(mht.getHouseTypes())
