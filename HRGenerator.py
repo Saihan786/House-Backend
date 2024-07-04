@@ -86,6 +86,7 @@ def generateBestTypes(housetypes, budget=500, maxsize=500):
     
     (proportions, profit) = simplexmax(revenues, costs, sizes, 10000000000, 1500)
     printResults(proportions, profit, names)
+    return (proportions, profit)
 
 
 
