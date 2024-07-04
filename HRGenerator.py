@@ -1,4 +1,5 @@
 import scipy.optimize as opt
+from math import floor
 
 # House Road Generator
 # Primary function of this class is to generate the numbers of houses and roads of each type to optimise to profit and cost
@@ -52,17 +53,28 @@ def simplexmax(revenues, costs, sizes, budget, maxsize):
     ineq_values = [budget, maxsize]
 
     result = opt.linprog(objective, A_ub=ineq_coeffs, b_ub=ineq_values)
-    return (result.x, -1*result.fun)
+
+    proportions = result.x
+    proportions = [floor(x) for x in proportions]
+    
+    totalprofit = 0
+    profits = []
+    for i in range(len(proportions)):
+        profits.append(proportions[i] * revenues[i])
+    for profit in profits:
+        totalprofit+=profit
+    
+    return (proportions, totalprofit)
 
 def printResults(proportions, profit, names):
-    print("The optimal solution is to have: ")
+    print("The best solution is to have: ")
     for i in range(len(proportions)):
         print("     ", proportions[i], "houses of housetype", names[i])
     print("The total profit is", profit, "pounds.")
 
 # Objective function is to maximise profit
 # Basic constraints of total cost are to be within budget and to be within rlp size
-def generateOptimalTypes(housetypes, budget=500, maxsize=500):
+def generateBestTypes(housetypes, budget=500, maxsize=500):
     NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
     names, revenues, costs, sizes = [], [], [], []
 
@@ -84,4 +96,4 @@ def examples():
     mht.addNewHouseType("ht3", 175000, 0, 5, 18)
     mht.addNewHouseType("ht4", 200000, 0, 97, 1)
     mht.addNewHouseType("ht5", 215000, 0, 1, 101)
-    generateOptimalTypes(mht.getHouseTypes())
+    generateBestTypes(mht.getHouseTypes())
