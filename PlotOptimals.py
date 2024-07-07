@@ -45,55 +45,75 @@ def makeUnitPolygons(housetypes):
 
 
 
-def isParallel(line, changeline):
+def findAngle(line):
+    """
+    Returns the angle between two lines, with error from use of pi.
+    
+    Due to pi error, equality comparisons of results of this function should use rounded values.
+    """
+
     xs1, xe1 = line.xy[0]
     ys1, ye1 = line.xy[1]
-    xs2, xe2 = changeline.xy[0]
-    ys2, ye2 = changeline.xy[1]
-
     if xs1 == xe1:
-        angle1 = np.pi/2
+        angle = np.pi/2
     else:
-        angle1 = np.arctan((ye1-ys1)/(xe1-xs1))
-    if xs2 == xe2:
-        angle2 = np.pi/2
-    else:
-        angle2 = np.arctan((ye2-ys2)/(xe2-xs2))
-    return True if round(angle1, 3) == round(angle2, 3) else False
-
-def makeParallel(line, changeline, unitPolygon):
-    def findAngle(l):
-        xs1, xe1 = l.xy[0]
-        ys1, ye1 = l.xy[1]
-        if xs1 == xe1:
-            angle = np.pi/2
-        else:
-            angle = np.arctan((ye1-ys1)/(xe1-xs1))
-        return angle
-    angle, changle = findAngle(line), findAngle(changeline)
+        angle = np.arctan((ye1-ys1)/(xe1-xs1))
+    return angle
 
 
-    ax = geopandas.GeoSeries(line).plot()
-    # print(line)
-    # print(changeline)
-    # print(angle-changle)
-    geopandas.GeoSeries(unitPolygon).plot(ax=ax, color="red")
-    unitPolygon = affinity.rotate(unitPolygon, angle-changle, origin="centroid", use_radians=True)
-    upline = LineString([unitPolygon.exterior.coords[0], unitPolygon.exterior.coords[1]])
-    geopandas.GeoSeries(unitPolygon).plot(ax=ax, color="green")
-    plt.show()   
+def isParallel(line1, line2):
+    """"
+    Returns true if two lines have the same angle to 3 decimal places.
     
-    print(changle, findAngle(upline), findAngle(line))
-    print("The angle we need:", angle)
-    print(isParallel(upline, line))
+    This is to account for lines rotated using pi (like with radians).
+    """
+
+    angle1 = findAngle(line1)
+    angle2 = findAngle(line2)
+
+    if round(angle1, 3) == round(angle2, 3):
+        return True
+    else:
+        return False
+    
+
+def rotatePolygon(resultLine, polygon, showRotation=False):
+    """"
+    Rotates the polygon until it is parallel to the line.
+    
+    Prints meta information about the rotation and displays it if boolean is set to True.
+    
+    Returns the rotated polygon.
+    """
+
+    oldPolygon = polygon
+    polygonLine = LineString([polygon.exterior.coords[0], polygon.exterior.coords[1]])
+
+    resultAngle, changeAngle = findAngle(resultLine), findAngle(polygonLine)
+    polygon = affinity.rotate(polygon, resultAngle-changeAngle, origin="centroid", use_radians=True)
+    polygonLine = LineString([polygon.exterior.coords[0], polygon.exterior.coords[1]])
+    
+
+    if showRotation:
+        ax = geopandas.GeoSeries(resultLine).plot()
+        geopandas.GeoSeries(oldPolygon).plot(ax=ax, color="red")
+        geopandas.GeoSeries(polygon).plot(ax=ax, color="green")
+        plt.show()
+
+        print("Original angle of polygonLine is", changeAngle)
+        print("The rotated angle of polygonLine should be", resultAngle)
+        print("The actual rotated angle is", findAngle(polygonLine))
+        if isParallel(polygonLine, resultLine):
+            print("Successful rotation")
+        else:
+            print("Unsuccessful rotation")
+    
+    return polygon
 
 
-    return True if angle == changle else False
-
-
-def initialisePlotting(unitPolygon):
-    # select longest side
-    b = rlppolygon.boundary.coords
+def findLongestLine(polygon):
+    """Returns longest line of the polygon."""
+    b = polygon.boundary.coords
     lines = [LineString(b[point:point+2]) for point in range(len(b)-1)]
 
     length = 0
@@ -102,25 +122,21 @@ def initialisePlotting(unitPolygon):
         if lines[i].length>length:
             length=lines[i].length
             longestlineindex = i
-    longestline = lines[longestlineindex].coords
 
+    return lines[longestlineindex].coords
+
+
+def initialisePlotting(unitPolygon):
+    """"""
+
+    longestline = findLongestLine(rlppolygon)
+    visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
+    rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
     
-    # reorientate unit polygon to be parallel to line
-    upline = LineString([unitPolygon.exterior.coords[0], unitPolygon.exterior.coords[1]])
-    # ax = geopandas.GeoSeries(upline).plot(color="red")
-    # geopandas.GeoSeries(upline.centroid).plot(ax=ax, color="blue")
-    
-    longestline = [(x-534300, y-182500) for (x,y) in longestline]
-    print(longestline)
-    makeParallel(LineString(longestline), upline, unitPolygon)
-
-
     
     
     # select direction parallel to side while making housecoords
     # make house Polygon
-    
-    
     
     firstcoord = oldrlpcoords[2]
     xpadding, ypadding = 5, 5
