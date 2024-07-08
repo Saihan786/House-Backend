@@ -23,10 +23,13 @@ def fillMHT(mht):
     mht.addNewHouseType("ht2", 150000, 0, 50, 50)
 
 
-# in order of housetypes
-# make unit polygons for each housetype (even the ones that have frequency zero, because we may need to change the proportions of polygons)
-# unit polygons can be adjusted around the rlp by adding to its x and y values by a set amount
 def makeUnitPolygons(housetypes):
+    """
+    Returns a list of unit polygons for each housetype
+    
+    Unit polygons can be adjusted around the rlp by adding to its x and y values.
+    """
+
     unitPolygons = []
     for ht in housetypes:
         # (name, revenue, cost, width, length, size)
@@ -82,6 +85,7 @@ def rotatePolygon(resultLine, polygon, showRotation=False):
     Rotates the polygon until it is parallel to the line.
     
     Prints meta information about the rotation and displays it if boolean is set to True.
+        NOTE: In order to effectively display the rotation, the resultLine and polygon must be relatively close to each other.
     
     Returns the rotated polygon.
     """
@@ -125,15 +129,40 @@ def findLongestLine(polygon):
 
     return lines[longestlineindex].coords
 
+def moveToOrigin(polygon):
+    """
+    Moves the polygon until two of its vertices touch the axis lines.
+    
+    Returns the moved polygon.
+    """
+
+    X,Y = 0,1
+    leftmost = polygon.exterior.coords[0][X]
+    bottom = polygon.exterior.coords[0][Y]
+    for coord in polygon.exterior.coords[1:-1]:
+        if coord[X] < leftmost : leftmost=coord[X]
+        if coord[Y] < bottom : bottom=coord[Y]
+    
+    shiftcoords = [(coord[X]-leftmost, coord[Y]-bottom) for coord in polygon.exterior.coords[:-1]]
+    return Polygon(shiftcoords)
+
 
 def initialisePlotting(unitPolygon):
-    """"""
+    """Places a unitPolygon parallel to the longest edge of the rlp."""
 
+    def showRotation(longestline, unitPolygon):
+        visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
+        rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
+
+    
     longestline = findLongestLine(rlppolygon)
-    visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
-    rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
-    
-    
+    rotatedUP = rotatePolygon(LineString(longestline), unitPolygon, showRotation=False)
+    rotatedUP = moveToOrigin(rotatedUP)
+
+
+
+
+
     
     # select direction parallel to side while making housecoords
     # make house Polygon
@@ -157,15 +186,23 @@ def initialisePlotting(unitPolygon):
     
 
 def plotProportions(housetypes, unitPolygons, proportions):
+    """
+    Plots all housetypes on the rlp.
+    
+    The number of houses of each ht depends on its proportion in proportions.
+    
+    Unit polygons are copied and moved around the rlp to create new houses.
+    """
+
     emptyrlp = True
     for htindex in range(len(housetypes)):
         ht = housetypes[htindex]
         freq = proportions[htindex]
-        currUP = unitPolygons[htindex]
+        unitPolygon = unitPolygons[htindex]
 
         for housecount in range(freq):
             if emptyrlp:
-                initialisePlotting(currUP)
+                initialisePlotting(unitPolygon)
                 emptyrlp = False
             else:
                 pass

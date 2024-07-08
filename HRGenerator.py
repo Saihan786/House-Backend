@@ -74,7 +74,7 @@ def printResults(proportions, profit, names):
 
 # Objective function is to maximise profit
 # Basic constraints of total cost are to be within budget and to be within rlp size
-def generateBestTypes(housetypes, budget=500, maxsize=500):
+def generateBestTypes(housetypes, budget=500, maxsize=500, showResults=False):
     NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
     names, revenues, costs, sizes = [], [], [], []
 
@@ -84,8 +84,10 @@ def generateBestTypes(housetypes, budget=500, maxsize=500):
         costs.append(housetype[COST])
         sizes.append(housetype[SIZE])
     
-    (proportions, profit) = simplexmax(revenues, costs, sizes, 10000000000, 1500)
-    printResults(proportions, profit, names)
+    (proportions, profit) = simplexmax(revenues, costs, sizes, budget, maxsize)
+
+    if showResults : printResults(proportions, profit, names)
+    
     return (proportions, profit)
 
 
