@@ -4,7 +4,7 @@
 from HRGenerator import ManageHouseTypes, generateBestTypes
 import matplotlib.pyplot as plt
 from RedLinePlot import getRLP, getPath
-from shapely import Polygon, LineString, affinity
+from shapely import Polygon, LineString, affinity, Point
 from AddDataToDF import coords
 import geopandas
 import numpy as np
@@ -12,6 +12,7 @@ import ShapeFunctions
 
 
 NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
+X, Y = 0, 1
 
 rlp = getRLP(getPath())
 rlp = rlp.to_crs(epsg=27700)
@@ -48,7 +49,6 @@ def makeUnitPolygons(housetypes):
     return unitPolygons
 
 
-
 def initNewRow(unitPolygon, lleq=None, aleq=None, padding=5):
     """Places a unitPolygon parallel to the longest edge of the rlp.
     
@@ -59,33 +59,27 @@ def initNewRow(unitPolygon, lleq=None, aleq=None, padding=5):
     
     """
 
-    X, Y = 0, 1
     linep1, linep2 = 0, 1
 
     def showRotation(longestline, unitPolygon):
         visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
         ShapeFunctions.rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
-    def showTranslation(up):
-        ShapeFunctions.moveToOrigin(up, showTranslation=True)
-
 
 
     # rotate unit polygon
     
     longestline = ShapeFunctions.findLongestLine(rlppolygon)
-    longestline = [coord for coord in longestline]
-    if longestline[linep1][X] > longestline[linep2][X]:
-        temp = longestline[linep1]
-        longestline[linep1] = longestline[linep2] 
-        longestline[linep2] = temp 
+    longestline = ShapeFunctions.orderLine(longestline)
 
     
-    rotatedUP = ShapeFunctions.rotatePolygon(LineString(longestline), unitPolygon, showRotation=True)
-    rotatedUP = ShapeFunctions.moveToOrigin(rotatedUP, showTranslation=True)
+    rotatedUP = ShapeFunctions.rotatePolygon(LineString(longestline), unitPolygon)
+    rotatedUP = ShapeFunctions.moveToOrigin(rotatedUP, showTranslation=False)
 
 
     # find normal lines and set initial house padded from longestline and adjacent line with GIVEN padding to place houses in new row
     #       (so this method should only plot initial houses at each row of GIVEN padding using perpendicular lines)
+
+
 
 
 def plotRow():
@@ -98,11 +92,9 @@ def plotRow():
     an obstacle is reached or if the end of the rlp is reached.
     
     """
-    
+
     pass
     
-
-
 
 def plotProportions(housetypes, unitPolygons, proportions):
     """Plots all housetypes on the rlp.
@@ -113,7 +105,14 @@ def plotProportions(housetypes, unitPolygons, proportions):
     
     """
     
+    linep1, linep2 = 0, 1
+    
+    longestline = ShapeFunctions.findLongestLine(rlppolygon)
+    longestline = ShapeFunctions.orderLine(longestline)
 
+    lleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
+    
+    
     newRow = True
     for htindex in range(len(housetypes)):
         ht = housetypes[htindex]
@@ -139,5 +138,5 @@ housetypes = mht.getHouseTypes()
 
 unitPolygons = makeUnitPolygons(housetypes)
 
-(proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=True)
+(proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
 plotProportions(housetypes, unitPolygons, proportions)

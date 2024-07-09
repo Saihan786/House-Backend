@@ -6,6 +6,8 @@ import geopandas
 import matplotlib.pyplot as plt
 
 
+X,Y = 0,1
+
 def findLongestLine(polygon):
     """Returns longest line of the polygon."""
     b = polygon.boundary.coords
@@ -19,6 +21,21 @@ def findLongestLine(polygon):
             longestlineindex = i
 
     return lines[longestlineindex].coords
+
+
+def orderLine(line):
+    """Returns line as a list. The coordinate with the smaller x-value is first."""
+    
+    linep1, linep2 = 0, 1
+
+    line = [coord for coord in line]
+    
+    if line[linep1][X] > line[linep2][X]:
+        temp = line[linep1]
+        line[linep1] = line[linep2] 
+        line[linep2] = temp 
+
+    return line
 
 
 def findAngle(line):
@@ -130,10 +147,10 @@ def checkVertical(c1, c2):
 def lineEQ(c1, c2):
     """Returns line equation for two points as a tuple (gradient, cvalue, isVertical).
     
-    Line equations is used to find the normal line for two adjacent lines in an rlp,
-    which allows houses to be placed from either line so valuable space isn't missed.
+    Line equations are used to find the normal line for two adjacent lines in an rlp,
+    which allows houses to be placed considering both lines so valuable space isn't missed.
     
-    Line equations is also used to continue to place houses padded from another house,
+    Line equations are also used to continue to place houses padded from another house,
     rather than padded from a line, which maximises the rlp area used to place houses.
     
     """
