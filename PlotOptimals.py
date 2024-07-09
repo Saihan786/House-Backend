@@ -104,6 +104,11 @@ def plotProportions(housetypes, unitPolygons, proportions):
     Unit polygons are copied and moved around the rlp to create new houses.
     
     """
+
+    def lineyvalue(leq, x):
+        m, c, isVertical = leq
+        return (m*x + c)
+    
     
     linep1, linep2 = 0, 1
     
@@ -111,6 +116,11 @@ def plotProportions(housetypes, unitPolygons, proportions):
     longestline = ShapeFunctions.orderLine(longestline)
 
     lleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
+    nlleq = ShapeFunctions.normalLineEQ(lleq, (0.5 , lineyvalue(lleq,0.5)))
+
+    # ax=geopandas.GeoSeries(LineString([ [0, lleq[1]], [1, lleq[0]+lleq[1]] ])).plot(color="red")
+    # geopandas.GeoSeries(LineString([ [0, nlleq[1]], [1, nlleq[0]+nlleq[1]] ])).plot(ax=ax, color="green")
+    # plt.show()
     
     
     newRow = True

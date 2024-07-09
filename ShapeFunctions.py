@@ -29,7 +29,7 @@ def orderLine(line):
     linep1, linep2 = 0, 1
 
     line = [coord for coord in line]
-    
+
     if line[linep1][X] > line[linep2][X]:
         temp = line[linep1]
         line[linep1] = line[linep2] 
@@ -166,3 +166,26 @@ def lineEQ(c1, c2):
     m = (y2-y1)/(x2-x1)
     c = y1-(m*x1)
     return (m, c, False)
+
+
+def normalLineEQ(leq, point):
+    """Returns equation for the normal of a given line as a tuple (gradient, cvalue, isVertical).
+    
+    The normal line meets the given line and the given point, and is used to pad for new rows in the rlp.
+    
+    The given line is given as a tuple (gradient, cvalue, isVertical).
+
+    Returns a special value if the given line is horizontal (returns (0,0,True)).
+    
+    """
+
+    x, y = point[X], point[Y]
+    m, c, isVertical = leq
+
+    if isVertical : return (0, y, False)
+    if m==0 : return (0, 0, True)
+    
+    normalm = -1 / m
+    normalc = y - (normalm*x)
+
+    return (normalm, normalc, False)
