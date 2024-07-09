@@ -8,6 +8,7 @@ from shapely import Polygon, LineString, affinity
 from AddDataToDF import coords
 import geopandas
 import numpy as np
+import ShapeFunctions
 
 
 NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
@@ -24,10 +25,10 @@ def fillMHT(mht):
 
 
 def makeUnitPolygons(housetypes):
-    """
-    Returns a list of unit polygons for each housetype
+    """Returns a list of unit polygons for each housetype
     
     Unit polygons can be adjusted around the rlp by adding to its x and y values.
+
     """
 
     unitPolygons = []
@@ -48,165 +49,86 @@ def makeUnitPolygons(housetypes):
 
 
 
-def findAngle(line):
-    """
-    Returns the angle between two lines, with error from use of pi.
+def initNewRow(unitPolygon, lleq=None, aleq=None, padding=5):
+    """Places a unitPolygon parallel to the longest edge of the rlp.
     
-    Due to pi error, equality comparisons of results of this function should use rounded values.
-    """
+    The unit polygon is rotated to be aligned with the longest edge and padded from the longest and adjacent lines
+    to start a new row.
 
-    xs1, xe1 = line.xy[0]
-    ys1, ye1 = line.xy[1]
-    if xs1 == xe1:
-        angle = np.pi/2
-    else:
-        angle = np.arctan((ye1-ys1)/(xe1-xs1))
-    return angle
-
-
-def isParallel(line1, line2):
-    """"
-    Returns true if two lines have the same angle to 3 decimal places.
+    This method receives the two normal line equations and padding and uses these to place the new initial house.
     
-    This is to account for lines rotated using pi (like with radians).
     """
 
-    angle1 = findAngle(line1)
-    angle2 = findAngle(line2)
-
-    if round(angle1, 3) == round(angle2, 3):
-        return True
-    else:
-        return False
-    
-
-def rotatePolygon(resultLine, polygon, showRotation=False):
-    """"
-    Rotates the polygon until it is parallel to the line.
-    
-    Prints meta information about the rotation and displays it if boolean is set to True.
-        NOTE: In order to effectively display the rotation, the resultLine and polygon must be relatively close to each other.
-    
-    Returns the rotated polygon.
-    """
-
-    oldPolygon = polygon
-    polygonLine = LineString([polygon.exterior.coords[0], polygon.exterior.coords[1]])
-
-    resultAngle, changeAngle = findAngle(resultLine), findAngle(polygonLine)
-    polygon = affinity.rotate(polygon, resultAngle-changeAngle, origin="centroid", use_radians=True)
-    polygonLine = LineString([polygon.exterior.coords[0], polygon.exterior.coords[1]])
-    
-
-    if showRotation:
-        ax = geopandas.GeoSeries(resultLine).plot()
-        geopandas.GeoSeries(oldPolygon).plot(ax=ax, color="red")
-        geopandas.GeoSeries(polygon).plot(ax=ax, color="green")
-        plt.show()
-
-        print("Original angle of polygonLine is", changeAngle)
-        print("The rotated angle of polygonLine should be", resultAngle)
-        print("The actual rotated angle is", findAngle(polygonLine))
-        if isParallel(polygonLine, resultLine):
-            print("Successful rotation")
-        else:
-            print("Unsuccessful rotation")
-    
-    return polygon
-
-
-def findLongestLine(polygon):
-    """Returns longest line of the polygon."""
-    b = polygon.boundary.coords
-    lines = [LineString(b[point:point+2]) for point in range(len(b)-1)]
-
-    length = 0
-    longestlineindex = 0
-    for i in range(len(lines)):
-        if lines[i].length>length:
-            length=lines[i].length
-            longestlineindex = i
-
-    return lines[longestlineindex].coords
-
-def moveToOrigin(polygon):
-    """
-    Moves the polygon until two of its vertices touch the axis lines.
-    
-    Returns the moved polygon.
-    """
-
-    X,Y = 0,1
-    leftmost = polygon.exterior.coords[0][X]
-    bottom = polygon.exterior.coords[0][Y]
-    for coord in polygon.exterior.coords[1:-1]:
-        if coord[X] < leftmost : leftmost=coord[X]
-        if coord[Y] < bottom : bottom=coord[Y]
-    
-    shiftcoords = [(coord[X]-leftmost, coord[Y]-bottom) for coord in polygon.exterior.coords[:-1]]
-    return Polygon(shiftcoords)
-
-
-def initialisePlotting(unitPolygon):
-    """Places a unitPolygon parallel to the longest edge of the rlp."""
+    X, Y = 0, 1
+    linep1, linep2 = 0, 1
 
     def showRotation(longestline, unitPolygon):
         visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
-        rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
+        ShapeFunctions.rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
+    def showTranslation(up):
+        ShapeFunctions.moveToOrigin(up, showTranslation=True)
+
+
+
+    # rotate unit polygon
+    
+    longestline = ShapeFunctions.findLongestLine(rlppolygon)
+    longestline = [coord for coord in longestline]
+    if longestline[linep1][X] > longestline[linep2][X]:
+        temp = longestline[linep1]
+        longestline[linep1] = longestline[linep2] 
+        longestline[linep2] = temp 
 
     
-    longestline = findLongestLine(rlppolygon)
-    rotatedUP = rotatePolygon(LineString(longestline), unitPolygon, showRotation=False)
-    rotatedUP = moveToOrigin(rotatedUP)
+    rotatedUP = ShapeFunctions.rotatePolygon(LineString(longestline), unitPolygon, showRotation=True)
+    rotatedUP = ShapeFunctions.moveToOrigin(rotatedUP, showTranslation=True)
 
 
+    # find normal lines and set initial house padded from longestline and adjacent line with GIVEN padding to place houses in new row
+    #       (so this method should only plot initial houses at each row of GIVEN padding using perpendicular lines)
 
 
-
+def plotRow():
+    """Plots a whole row, given the parallel eq for the longest line AND the initial house coordinates for this row.
     
-    # select direction parallel to side while making housecoords
-    # make house Polygon
+    An initialised row has an initial house padded correctly, so this method doesn't need to worry about perpendicular padding. All this
+    function does is pads new houses from the previous (starting at initial) house parallel to the longest line.
     
-    firstcoord = oldrlpcoords[2]
-    xpadding, ypadding = 5, 5
-    X, Y = 0, 1
+    If obstacles are present, the best solution may be to plot from two adjacent lines and see when currCoords overlap to see if
+    an obstacle is reached or if the end of the rlp is reached.
     
-    housecoords = [(up[X]+firstcoord[X]+xpadding, up[Y]+firstcoord[Y]+ypadding) for up in unitPolygon.exterior.coords]
-    house =  Polygon(housecoords)
-
-    # print(oldrlpcoords)
-    # print(housecoords)
-
-    ax = rlp.plot(facecolor="grey")
-    gs = geopandas.GeoSeries(house)
-    gs.plot(ax=ax, facecolor="red")
-    gs.plot(facecolor="red")
-
-    # plt.show()
+    """
     
+    pass
+    
+
+
 
 def plotProportions(housetypes, unitPolygons, proportions):
-    """
-    Plots all housetypes on the rlp.
+    """Plots all housetypes on the rlp.
     
     The number of houses of each ht depends on its proportion in proportions.
     
     Unit polygons are copied and moved around the rlp to create new houses.
+    
     """
+    
 
-    emptyrlp = True
+    newRow = True
     for htindex in range(len(housetypes)):
         ht = housetypes[htindex]
         freq = proportions[htindex]
         unitPolygon = unitPolygons[htindex]
 
         for housecount in range(freq):
-            if emptyrlp:
-                initialisePlotting(unitPolygon)
-                emptyrlp = False
+            if newRow:
+                # adjperppadding shouldn't change, only perppadding should change
+                initNewRow(unitPolygon)
+                newRow = False
             else:
                 pass
-
+                # use parallel line (parallel to longestline) to continue house placement from initial house (should be moved to plotProportions())
+            
 
 
 
@@ -217,5 +139,5 @@ housetypes = mht.getHouseTypes()
 
 unitPolygons = makeUnitPolygons(housetypes)
 
-(proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
+(proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=True)
 plotProportions(housetypes, unitPolygons, proportions)
