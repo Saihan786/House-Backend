@@ -1,6 +1,7 @@
 # don't consider budget or road costs
 # might be easier to work with one housetype for now
 
+import geopandas.geoseries
 from HRGenerator import ManageHouseTypes, generateBestTypes
 import matplotlib.pyplot as plt
 from RedLinePlot import getRLP, getPath
@@ -105,23 +106,27 @@ def plotProportions(housetypes, unitPolygons, proportions):
     
     """
 
+    linep1, linep2 = 0, 1
+
     def lineyvalue(leq, x):
         m, c, isVertical = leq
         return (m*x + c)
     
     
-    linep1, linep2 = 0, 1
     
     longestline = ShapeFunctions.findLongestLine(rlppolygon)
     longestline = ShapeFunctions.orderLine(longestline)
 
     lleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
     nlleq = ShapeFunctions.normalLineEQ(lleq, (0.5 , lineyvalue(lleq,0.5)))
-
-    # ax=geopandas.GeoSeries(LineString([ [0, lleq[1]], [1, lleq[0]+lleq[1]] ])).plot(color="red")
-    # geopandas.GeoSeries(LineString([ [0, nlleq[1]], [1, nlleq[0]+nlleq[1]] ])).plot(ax=ax, color="green")
-    # plt.show()
     
+
+    adjacentline = ShapeFunctions.findAdjacentLine(rlppolygon)
+    adjacentline = ShapeFunctions.orderLine(adjacentline)
+
+    # aleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
+    # naleq = ShapeFunctions.normalLineEQ(lleq, (0.5 , lineyvalue(lleq,0.5)))
+
     
     newRow = True
     for htindex in range(len(housetypes)):
@@ -131,12 +136,13 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
         for housecount in range(freq):
             if newRow:
+                # use perpendicular line to begin house placement on a new row
                 # adjperppadding shouldn't change, only perppadding should change
                 initNewRow(unitPolygon)
                 newRow = False
             else:
-                pass
                 # use parallel line (parallel to longestline) to continue house placement from initial house (should be moved to plotProportions())
+                newRow = True
             
 
 

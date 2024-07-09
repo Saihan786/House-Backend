@@ -8,8 +8,13 @@ import matplotlib.pyplot as plt
 
 X,Y = 0,1
 
-def findLongestLine(polygon):
-    """Returns longest line of the polygon."""
+def findLongestLineIndex(polygon):
+    """Supporting method to find the longest line and adjacent line.
+    
+    Returns the list of lines and index of the longest line from the polygon.
+    
+    """
+
     b = polygon.boundary.coords
     lines = [LineString(b[point:point+2]) for point in range(len(b)-1)]
 
@@ -20,7 +25,26 @@ def findLongestLine(polygon):
             length=lines[i].length
             longestlineindex = i
 
+    return (lines, longestlineindex)
+
+
+def findLongestLine(polygon):
+    """Returns longest line of the polygon."""
+
+    lines, longestlineindex = findLongestLineIndex(polygon)
+
     return lines[longestlineindex].coords
+
+
+def findAdjacentLine(polygon):
+    """Returns the line adjacent to the longest line of the polygon."""
+    
+    lines, longestlineindex = findLongestLineIndex(polygon)
+    
+    adjacentlineindex = longestlineindex+1
+    if adjacentlineindex >= len(lines) : adjacentlineindex = 0
+
+    return lines[adjacentlineindex].coords
 
 
 def orderLine(line):
