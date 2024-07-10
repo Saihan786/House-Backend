@@ -5,7 +5,7 @@ import geopandas.geoseries
 from HRGenerator import ManageHouseTypes, generateBestTypes
 import matplotlib.pyplot as plt
 from RedLinePlot import getRLP, getPath
-from shapely import Polygon, LineString, affinity, Point
+from shapely import Polygon, LineString, affinity, Point, intersection
 from AddDataToDF import coords
 import geopandas
 import numpy as np
@@ -106,26 +106,65 @@ def plotProportions(housetypes, unitPolygons, proportions):
     
     """
 
-    linep1, linep2 = 0, 1
+    linep1idx, linep2idx = 0, 1
 
-    def lineyvalue(leq, x):
+    def lineyval(leq, x):
+        """Returns the y value of a line equation given the x value."""
+        
         m, c, isVertical = leq
         return (m*x + c)
-    
-    
-    
-    longestline = ShapeFunctions.findLongestLine(rlppolygon)
-    longestline = ShapeFunctions.orderLine(longestline)
 
-    lleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
-    nlleq = ShapeFunctions.normalLineEQ(lleq, (0.5 , lineyvalue(lleq,0.5)))
+    def lines(polygon):
+        """Returns the longest line and its adjacent line of a given polygon."""
+
+        longestline = ShapeFunctions.findLongestLine(polygon)
+        longestline = ShapeFunctions.orderLine(longestline)
+        adjacentline, corner = ShapeFunctions.findAdjacentLine(polygon)
+        adjacentline = ShapeFunctions.orderLine(adjacentline)
+
+        return longestline, adjacentline, corner
+    
+    def leqs(line):
+        """Returns the line equation for a line."""
+        return ShapeFunctions.lineEQ(line[linep1idx], line[linep2idx])
+    
+    def leqtoline(leq, polygon):
+        """Returns a line for a line equation. The returned line touches the edges of the polygon."""
+
+        minxval = maxxval = polygon.exterior.coords[0][X]
+        for coord in polygon.exterior.coords:
+            if coord[X]<minxval:
+                minxval=coord[X]
+            if coord[X]>maxxval:
+                maxxval=coord[X]
+
+        verylongline = [(minxval, lineyval(leq, minxval)) , (maxxval, lineyval(leq, maxxval))]
+        shorterline = intersection(polygon, LineString( verylongline ))
+
+        return shorterline
     
 
-    adjacentline = ShapeFunctions.findAdjacentLine(rlppolygon)
-    adjacentline = ShapeFunctions.orderLine(adjacentline)
+    longestline, adjacentline, corner = lines(rlppolygon)
+    lleq, aleq = leqs(longestline), leqs(adjacentline)
+    
+    
+    llpaddedpoint = (corner[0]-5, lineyval(lleq, (corner[0]-5)))
+    alpaddedpoint = (corner[0]-2, lineyval(aleq, (corner[0]-2)))
+    
+    nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
+    naleq = ShapeFunctions.normalLineEQ(aleq, alpaddedpoint)
 
-    # aleq = ShapeFunctions.lineEQ(longestline[linep1], longestline[linep2])
-    # naleq = ShapeFunctions.normalLineEQ(lleq, (0.5 , lineyvalue(lleq,0.5)))
+
+
+    fig, ax = plt.subplots()
+    
+    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+    geopandas.GeoSeries( leqtoline(nlleq, rlppolygon) ).plot(ax=ax, color="green")
+    geopandas.GeoSeries( leqtoline(naleq, rlppolygon) ).plot(ax=ax, color="green")
+    plt.show()
+    
+
+    
 
     
     newRow = True
@@ -137,11 +176,16 @@ def plotProportions(housetypes, unitPolygons, proportions):
         for housecount in range(freq):
             if newRow:
                 # use perpendicular line to begin house placement on a new row
-                # adjperppadding shouldn't change, only perppadding should change
+                # (llpadding and?) naleq should change for every new row
+                # 
                 initNewRow(unitPolygon)
                 newRow = False
+                alpaddedpoint = (alpaddedpoint[X]-2, lineyval(lleq, (alpaddedpoint[X]-2)))
             else:
-                # use parallel line (parallel to longestline) to continue house placement from initial house (should be moved to plotProportions())
+                # use parallel line (parallel to longestline) to continue house placement from initial house
+                # housepadding should never change
+                plotRow()
+                llpaddedpoint = (llpaddedpoint[X]-5, lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
                 newRow = True
             
 

@@ -37,14 +37,24 @@ def findLongestLine(polygon):
 
 
 def findAdjacentLine(polygon):
-    """Returns the line adjacent to the longest line of the polygon."""
+    """Returns the line adjacent to the longest line of the polygon, and the point at which they meet.
+
+    Returns ([adjacent line coords], [corner])
+    
+    """
     
     lines, longestlineindex = findLongestLineIndex(polygon)
     
     adjacentlineindex = longestlineindex+1
     if adjacentlineindex >= len(lines) : adjacentlineindex = 0
 
-    return lines[adjacentlineindex].coords
+    corner = None
+    for lcoord in lines[longestlineindex].coords:
+        for acoord in lines[adjacentlineindex].coords:
+            if lcoord==acoord:
+                corner = lcoord
+
+    return (lines[adjacentlineindex].coords, corner)
 
 
 def orderLine(line):
@@ -195,7 +205,7 @@ def lineEQ(c1, c2):
 def normalLineEQ(leq, point):
     """Returns equation for the normal of a given line as a tuple (gradient, cvalue, isVertical).
     
-    The normal line meets the given line and the given point, and is used to pad for new rows in the rlp.
+    The normal line goes through the given point and the given line, and is used to pad for new rows in the rlp.
     
     The given line is given as a tuple (gradient, cvalue, isVertical).
 
