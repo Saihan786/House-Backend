@@ -124,9 +124,8 @@ def plotProportions(housetypes, unitPolygons, proportions):
     fig, ax = plt.subplots()
     
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
-    geopandas.GeoSeries( ShapeFunctions.leqtoline(nlleq, rlppolygon) ).plot(ax=ax, color="green")
-    geopandas.GeoSeries( ShapeFunctions.leqtoline(naleq, rlppolygon) ).plot(ax=ax, color="green")
-    plt.show()
+    # geopandas.GeoSeries( ShapeFunctions.leqtoline(nlleq, rlppolygon) ).plot(ax=ax, color="green")
+    # geopandas.GeoSeries( ShapeFunctions.leqtoline(naleq, rlppolygon) ).plot(ax=ax, color="green")
     
 
     
@@ -145,14 +144,32 @@ def plotProportions(housetypes, unitPolygons, proportions):
                 # 
                 initNewRow(unitPolygon)
                 newRow = False
-                alpaddedpoint = (alpaddedpoint[X]-2, ShapeFunctions.lineyval(lleq, (alpaddedpoint[X]-2)))
+
+                naleq = ShapeFunctions.normalLineEQ(aleq, alpaddedpoint)
+                naline = ShapeFunctions.leqtoline(naleq, rlppolygon)
+                if rlppolygon.contains(Point(alpaddedpoint)):
+                    geopandas.GeoSeries( Point(alpaddedpoint) ).plot(ax=ax, color="red")
+                    geopandas.GeoSeries( naline ).plot(ax=ax, color="green")
+
+                alpaddedpoint = (alpaddedpoint[X]-2, ShapeFunctions.lineyval(aleq, (alpaddedpoint[X]-2)))
+
             else:
                 # use parallel line (parallel to longestline) to continue house placement from initial house
                 # housepadding should never change
-                plotRow()
-                llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
+                for i in range(5):
+                # while rlppolygon.contains(Point(llpaddedpoint)):
+                    plotRow()
+
+                    nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
+                    nlline = ShapeFunctions.leqtoline(nlleq, rlppolygon)
+
+                    geopandas.GeoSeries( Point(llpaddedpoint) ).plot(ax=ax, color="red")
+                    geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
+
+                    llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
                 newRow = True
             
+    plt.show()
 
 
 
