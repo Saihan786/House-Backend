@@ -1,12 +1,13 @@
 """"Supporting functions when trying to work with lines and polygons."""
 
-from shapely import Polygon, LineString, affinity
+from shapely import Polygon, LineString, affinity, intersection
 import numpy as np
 import geopandas
 import matplotlib.pyplot as plt
 
 
 X,Y = 0,1
+linep1idx, linep2idx = 0, 1
 
 def findLongestLineIndex(polygon):
     """Supporting method to find the longest line and adjacent line.
@@ -57,17 +58,26 @@ def findAdjacentLine(polygon):
     return (lines[adjacentlineindex].coords, corner)
 
 
+def lines(polygon):
+        """Returns the longest line and its adjacent line of a given polygon."""
+
+        longestline = findLongestLine(polygon)
+        longestline = orderLine(longestline)
+        adjacentline, corner = findAdjacentLine(polygon)
+        adjacentline = orderLine(adjacentline)
+
+        return longestline, adjacentline, corner
+
+
 def orderLine(line):
     """Returns line as a list. The coordinate with the smaller x-value is first."""
-    
-    linep1, linep2 = 0, 1
 
     line = [coord for coord in line]
 
-    if line[linep1][X] > line[linep2][X]:
-        temp = line[linep1]
-        line[linep1] = line[linep2] 
-        line[linep2] = temp 
+    if line[linep1idx][X] > line[linep2idx][X]:
+        temp = line[linep1idx]
+        line[linep1idx] = line[linep2idx] 
+        line[linep2idx] = temp 
 
     return line
 
@@ -178,6 +188,24 @@ def checkVertical(c1, c2):
     return False
 
 
+
+
+def leqtoline(leq, polygon):
+        """Returns a line for a line equation. The returned line touches the edges of the polygon."""
+
+        minxval = maxxval = polygon.exterior.coords[0][X]
+        for coord in polygon.exterior.coords:
+            if coord[X]<minxval:
+                minxval=coord[X]
+            if coord[X]>maxxval:
+                maxxval=coord[X]
+
+        verylongline = [(minxval, lineyval(leq, minxval)) , (maxxval, lineyval(leq, maxxval))]
+        shorterline = intersection(polygon, LineString( verylongline ))
+
+        return shorterline
+
+
 def lineEQ(c1, c2):
     """Returns line equation for two points as a tuple (gradient, cvalue, isVertical).
     
@@ -202,6 +230,11 @@ def lineEQ(c1, c2):
     return (m, c, False)
 
 
+def leqs(line):
+    """Returns the line equation for a line."""
+    return lineEQ(line[linep1idx], line[linep2idx])
+
+
 def normalLineEQ(leq, point):
     """Returns equation for the normal of a given line as a tuple (gradient, cvalue, isVertical).
     
@@ -223,3 +256,10 @@ def normalLineEQ(leq, point):
     normalc = y - (normalm*x)
 
     return (normalm, normalc, False)
+
+
+def lineyval(leq, x):
+    """Returns the y value of a line equation given the x value."""
+    
+    m, c, isVertical = leq
+    return (m*x + c)

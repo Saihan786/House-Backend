@@ -108,48 +108,13 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
     linep1idx, linep2idx = 0, 1
 
-    def lineyval(leq, x):
-        """Returns the y value of a line equation given the x value."""
-        
-        m, c, isVertical = leq
-        return (m*x + c)
 
-    def lines(polygon):
-        """Returns the longest line and its adjacent line of a given polygon."""
-
-        longestline = ShapeFunctions.findLongestLine(polygon)
-        longestline = ShapeFunctions.orderLine(longestline)
-        adjacentline, corner = ShapeFunctions.findAdjacentLine(polygon)
-        adjacentline = ShapeFunctions.orderLine(adjacentline)
-
-        return longestline, adjacentline, corner
-    
-    def leqs(line):
-        """Returns the line equation for a line."""
-        return ShapeFunctions.lineEQ(line[linep1idx], line[linep2idx])
-    
-    def leqtoline(leq, polygon):
-        """Returns a line for a line equation. The returned line touches the edges of the polygon."""
-
-        minxval = maxxval = polygon.exterior.coords[0][X]
-        for coord in polygon.exterior.coords:
-            if coord[X]<minxval:
-                minxval=coord[X]
-            if coord[X]>maxxval:
-                maxxval=coord[X]
-
-        verylongline = [(minxval, lineyval(leq, minxval)) , (maxxval, lineyval(leq, maxxval))]
-        shorterline = intersection(polygon, LineString( verylongline ))
-
-        return shorterline
-    
-
-    longestline, adjacentline, corner = lines(rlppolygon)
-    lleq, aleq = leqs(longestline), leqs(adjacentline)
+    longestline, adjacentline, corner = ShapeFunctions.lines(rlppolygon)
+    lleq, aleq = ShapeFunctions.leqs(longestline), ShapeFunctions.leqs(adjacentline)
     
     
-    llpaddedpoint = (corner[0]-5, lineyval(lleq, (corner[0]-5)))
-    alpaddedpoint = (corner[0]-2, lineyval(aleq, (corner[0]-2)))
+    llpaddedpoint = (corner[0]-5, ShapeFunctions.lineyval(lleq, (corner[0]-5)))
+    alpaddedpoint = (corner[0]-2, ShapeFunctions.lineyval(aleq, (corner[0]-2)))
     
     nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
     naleq = ShapeFunctions.normalLineEQ(aleq, alpaddedpoint)
@@ -159,8 +124,8 @@ def plotProportions(housetypes, unitPolygons, proportions):
     fig, ax = plt.subplots()
     
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
-    geopandas.GeoSeries( leqtoline(nlleq, rlppolygon) ).plot(ax=ax, color="green")
-    geopandas.GeoSeries( leqtoline(naleq, rlppolygon) ).plot(ax=ax, color="green")
+    geopandas.GeoSeries( ShapeFunctions.leqtoline(nlleq, rlppolygon) ).plot(ax=ax, color="green")
+    geopandas.GeoSeries( ShapeFunctions.leqtoline(naleq, rlppolygon) ).plot(ax=ax, color="green")
     plt.show()
     
 
@@ -180,12 +145,12 @@ def plotProportions(housetypes, unitPolygons, proportions):
                 # 
                 initNewRow(unitPolygon)
                 newRow = False
-                alpaddedpoint = (alpaddedpoint[X]-2, lineyval(lleq, (alpaddedpoint[X]-2)))
+                alpaddedpoint = (alpaddedpoint[X]-2, ShapeFunctions.lineyval(lleq, (alpaddedpoint[X]-2)))
             else:
                 # use parallel line (parallel to longestline) to continue house placement from initial house
                 # housepadding should never change
                 plotRow()
-                llpaddedpoint = (llpaddedpoint[X]-5, lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
+                llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
                 newRow = True
             
 
