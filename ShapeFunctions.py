@@ -116,32 +116,18 @@ def findAdjacentLines(polygon):
     
     
     minxidx, maxxidx = 0, 0
-    minxfirst = []
+    maxxfirst = []
     for i in range(len(coords)):
         if coords[i][X]==minxvalue: minxidx=i
         if coords[i][X]==maxxvalue: maxxidx=i
 
-    minxfirst = coords[minxidx:] + coords[0:minxidx]
+    maxxfirst = coords[minxidx:] + coords[0:minxidx]
     maxxfirst = coords[maxxidx:] + coords[0:maxxidx]
-
-    for i in range(len(minxfirst)):
-        if minxfirst[i][X]==minxvalue: minxidx=i
-        if minxfirst[i][X]==maxxvalue: maxxidx=i
-
 
 
 
     lines, longestlineindex = findLongestLineIndex(polygon)
     longestline = findLongestLine(polygon)
-
-
-
-
-
-
-
-
-
 
     if longestline[linep2idx][X] < longestline[linep1idx][X]:
         longestline = [ longestline[linep2idx], longestline[linep1idx] ]
@@ -150,30 +136,11 @@ def findAdjacentLines(polygon):
     if longestline[linep1idx][X]==minxvalue:
         """Only use adjacent lines up to the point with the largest x value"""
 
-        if longestline[linep2idx]==minxfirst[1]:
-            reversemaxXidx = len(minxfirst) - maxxidx
-            adjacentpoints = [minxfirst[0]] + list(reversed(minxfirst))[:reversemaxXidx]
-        else:
-            adjacentpoints = minxfirst[0:maxxidx+1]
+        for i in range(len(maxxfirst)):
+            if maxxfirst[i][X]==minxvalue: minxidx=i
+            if maxxfirst[i][X]==maxxvalue: maxxidx=i
 
-        for i in range(-1+len(adjacentpoints)):
-            adjacentlines.append( LineString( [adjacentpoints[i] , adjacentpoints[i+1]] ) )
-            
-        
-        from geopandas import GeoSeries
-        from shapely import Point
-        ax=GeoSeries(polygon).plot()
-        # GeoSeries( adjacentlines ).plot(ax=ax, color="yellow")
-        # GeoSeries( LineString(longestline) ).plot(ax=ax, color="red")
-        plt.show()
-
-
-
-        
-    elif longestline[linep2idx][X]==maxxvalue:
-        """Only use adjacent lines down to the point with the smallest x value"""
-
-        if longestline[linep1idx]==maxxfirst[1]:
+        if longestline[linep2idx]==maxxfirst[1]:
             reversemaxXidx = len(maxxfirst) - maxxidx
             adjacentpoints = [maxxfirst[0]] + list(reversed(maxxfirst))[:reversemaxXidx]
         else:
@@ -181,13 +148,31 @@ def findAdjacentLines(polygon):
 
         for i in range(-1+len(adjacentpoints)):
             adjacentlines.append( LineString( [adjacentpoints[i] , adjacentpoints[i+1]] ) )
-
+            
         
         # from geopandas import GeoSeries
         # from shapely import Point
         # ax=GeoSeries(polygon).plot()
         # GeoSeries( adjacentlines ).plot(ax=ax, color="yellow")
+        # GeoSeries( LineString(longestline) ).plot(ax=ax, color="red")
         # plt.show()
+        
+    elif longestline[linep2idx][X]==maxxvalue:
+        """Only use adjacent lines down to the point with the smallest x value"""
+
+        for i in range(len(maxxfirst)):
+            if maxxfirst[i][X]==minxvalue: minxidx=i
+            if maxxfirst[i][X]==maxxvalue: maxxidx=i
+
+        if longestline[linep1idx]==maxxfirst[1]:
+            reverseminXidx = len(maxxfirst) - minxidx
+            adjacentpoints = [maxxfirst[0]] + list(reversed(maxxfirst))[:reverseminXidx]
+        else:
+            adjacentpoints = maxxfirst[0:minxidx+1]
+
+        for i in range(-1+len(adjacentpoints)):
+            adjacentlines.append( LineString( [adjacentpoints[i] , adjacentpoints[i+1]] ) )
+
 
     else:
         """Have to use adjacent lines in both directions"""
