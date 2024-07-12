@@ -50,7 +50,7 @@ def makeUnitPolygons(housetypes):
     return unitPolygons
 
 
-def initNewRow(unitPolygon, naleq, lleq=None, padding=5):
+def initNewRow(unitPolygon, lleq=None, padding=5):
     """Places a unitPolygon parallel to the longest edge of the rlp.
     
     The unit polygon is rotated to be aligned with the longest edge and padded from the longest and adjacent lines
@@ -108,6 +108,7 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
     fig, ax = plt.subplots()
     linep1idx, linep2idx = 0, 1
+    llpadding, alpadding = 5, 5
 
 
     longestline, adjacentline, corner = ShapeFunctions.lines(rlppolygon)
@@ -117,10 +118,9 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
     
     llpaddedpoint = (corner[0], ShapeFunctions.lineyval(lleq, (corner[0])))
-    alpaddedpoint = (corner[0]-2, ShapeFunctions.lineyval(aleq, (corner[0]-2)))
+    alpaddedpoint = (corner[0], ShapeFunctions.lineyval(aleq, (corner[0])))
     
     nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
-    naleq = ShapeFunctions.normalLineEQ(aleq, alpaddedpoint)
 
     
     newRow = True
@@ -136,17 +136,14 @@ def plotProportions(housetypes, unitPolygons, proportions):
                 # use perpendicular line to begin house placement on a new row
                 # (llpadding and?) naleq should change for every new row
                 # 
-                initNewRow(unitPolygon, naleq)
+                initNewRow(unitPolygon)
                 newRow = False
 
-                naleq = ShapeFunctions.normalLineEQ(aleq, alpaddedpoint)
-                naline = ShapeFunctions.leqtoline(naleq, rlppolygon)
                 if rlppolygon.contains(Point(alpaddedpoint)):
+                    print(alpaddedpoint[X])
                     geopandas.GeoSeries( Point(alpaddedpoint) ).plot(ax=ax, color="red")
-                    geopandas.GeoSeries( naline ).plot(ax=ax, color="green")
 
-
-                alpaddedpoint = (alpaddedpoint[X]-2, ShapeFunctions.lineyval(aleq, (alpaddedpoint[X]-2)))
+                alpaddedpoint = (alpaddedpoint[X]-alpadding, ShapeFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
 
             else:
                 # use parallel line (parallel to longestline) to continue house placement from initial house
@@ -164,10 +161,10 @@ def plotProportions(housetypes, unitPolygons, proportions):
                         geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
                         # pass
 
-                    llpaddedpoint = (llpaddedpoint[X]+5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]+5))) # to be moved to plotRow()
+                    llpaddedpoint = (llpaddedpoint[X]+llpadding, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
                 newRow = True
             
-    plt.show()
+    # plt.show()
 
 
 
@@ -180,3 +177,10 @@ unitPolygons = makeUnitPolygons(housetypes)
 
 (proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
 plotProportions(housetypes, unitPolygons, proportions)
+
+
+
+
+# ISSUES:
+#       fix the +- when calculating padded points, rlp doesn't know which direction to go sometimes
+#       sometimes points aren't detected with rlp.contains(Point)
