@@ -9,7 +9,7 @@ from shapely import Polygon, LineString, affinity, Point, intersection
 from AddDataToDF import coords
 import geopandas
 import numpy as np
-import ShapeFunctions
+import PolygonFunctions
 
 
 NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
@@ -64,17 +64,17 @@ def initNewRow(unitPolygon, lleq=None, padding=5):
 
     def showRotation(longestline, unitPolygon):
         visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
-        ShapeFunctions.rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
+        PolygonFunctions.rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
 
 
     # rotate unit polygon
     
-    longestline = ShapeFunctions.findLongestLine(rlppolygon)
-    longestline = ShapeFunctions.orderLine(longestline)
+    longestline = PolygonFunctions.findLongestLine(rlppolygon)
+    longestline = PolygonFunctions.orderLine(longestline)
 
     
-    rotatedUP = ShapeFunctions.rotatePolygon(LineString(longestline), unitPolygon)
-    rotatedUP = ShapeFunctions.moveToOrigin(rotatedUP, showTranslation=False)
+    rotatedUP = PolygonFunctions.rotatePolygon(LineString(longestline), unitPolygon)
+    rotatedUP = PolygonFunctions.moveToOrigin(rotatedUP, showTranslation=False)
 
 
     # find normal lines and set initial house padded from longestline and adjacent line with GIVEN padding to place houses in new row
@@ -111,16 +111,16 @@ def plotProportions(housetypes, unitPolygons, proportions):
     llpadding, alpadding = 5, 5
 
 
-    longestline, adjacentline, corner = ShapeFunctions.lines(rlppolygon)
-    lleq, aleq = ShapeFunctions.leqs(longestline), ShapeFunctions.leqs(adjacentline)
+    longestline, adjacentline, corner = PolygonFunctions.lines(rlppolygon)
+    lleq, aleq = PolygonFunctions.leqs(longestline), PolygonFunctions.leqs(adjacentline)
 
 
 
     
-    llpaddedpoint = (corner[0], ShapeFunctions.lineyval(lleq, (corner[0])))
-    alpaddedpoint = (corner[0], ShapeFunctions.lineyval(aleq, (corner[0])))
+    llpaddedpoint = (corner[0], PolygonFunctions.lineyval(lleq, (corner[0])))
+    alpaddedpoint = (corner[0], PolygonFunctions.lineyval(aleq, (corner[0])))
     
-    nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
+    nlleq = PolygonFunctions.normalLineEQ(lleq, llpaddedpoint)
 
     
     newRow = True
@@ -143,7 +143,7 @@ def plotProportions(housetypes, unitPolygons, proportions):
                     print(alpaddedpoint[X])
                     geopandas.GeoSeries( Point(alpaddedpoint) ).plot(ax=ax, color="red")
 
-                alpaddedpoint = (alpaddedpoint[X]-alpadding, ShapeFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
+                alpaddedpoint = (alpaddedpoint[X]-alpadding, PolygonFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
 
             else:
                 # use parallel line (parallel to longestline) to continue house placement from initial house
@@ -153,15 +153,15 @@ def plotProportions(housetypes, unitPolygons, proportions):
                 for i in range(1):
                     plotRow()
 
-                    nlleq = ShapeFunctions.normalLineEQ(lleq, llpaddedpoint)
-                    nlline = ShapeFunctions.leqtoline(nlleq, rlppolygon)
+                    nlleq = PolygonFunctions.normalLineEQ(lleq, llpaddedpoint)
+                    nlline = PolygonFunctions.leqtoline(nlleq, rlppolygon)
                     
                     if rlppolygon.contains(Point(llpaddedpoint)):
                         geopandas.GeoSeries( Point(llpaddedpoint) ).plot(ax=ax, color="red")
                         geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
                         # pass
 
-                    llpaddedpoint = (llpaddedpoint[X]+llpadding, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
+                    llpaddedpoint = (llpaddedpoint[X]+llpadding, PolygonFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
                 newRow = True
             
     # plt.show()
