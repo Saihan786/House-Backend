@@ -60,158 +60,101 @@ def findAdjacentLine(polygon):
 
 
 def findAdjacentLines(polygon):
-    """Returns the line adjacent to the longest line of the polygon, and the point at which they meet.
+    """Returns linePathX and linePathY which are each associated with a parallel/perpendicular line.
 
-    Returns ([adjacent line coords], [corner])
+    Returns [ (linePathX, gradient) , (linePathY, gradient) ]
+
+    Line paths are used instead of the corner to plot houses. They are lists of lines.
+
+    The gradients are for the lines that will be plotted from the line paths.
+
+    The line path containing the longest line will use the perpendicularline.
     
     """
 
     coords = polygon.exterior.coords[:-1]
+    xmin = xmax = ymin = ymax = 0
     
-    minxvalue = min([coord[X] for coord in coords])
-    maxxvalue = max([coord[X] for coord in coords])
-
+    for idx in range(len(coords)):
+        if coords[idx][X] < coords[xmin][X]:
+            xmin = idx
+        elif coords[idx][X] > coords[xmax][X]:
+            xmax = idx
+        elif coords[idx][Y] < coords[ymin][Y]:
+            ymin = idx
+        elif coords[idx][Y] > coords[ymax][Y]:
+            ymax = idx
 
     
-    
-    minxidx, maxxidx = 0, 0
-    maxxfirst = []
-    for i in range(len(coords)):
-        if coords[i][X]==minxvalue: minxidx=i
-        if coords[i][X]==maxxvalue: maxxidx=i
+    longestline = findLongestLine(polygon)    
+    mparallel, c, isV = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
+    mperp = -1/mparallel
 
-    maxxfirst = coords[minxidx:] + coords[0:minxidx]
-    maxxfirst = coords[maxxidx:] + coords[0:maxxidx]
-
-
-
-    lines, longestlineindex = findLongestLineIndex(polygon)
-    longestline = findLongestLine(polygon)
-
-    if longestline[linep2idx][X] < longestline[linep1idx][X]:
-        longestline = [ longestline[linep2idx], longestline[linep1idx] ]
-
-    adjacentlines = []
-    if longestline[linep1idx][X]==minxvalue:
-        """Only use adjacent lines up to the point with the largest x value"""
-
-        for i in range(len(maxxfirst)):
-            if maxxfirst[i][X]==minxvalue: minxidx=i
-            if maxxfirst[i][X]==maxxvalue: maxxidx=i
-
-        if longestline[linep2idx]==maxxfirst[1]:
-            reversemaxXidx = len(maxxfirst) - maxxidx
-            adjacentpoints = [maxxfirst[0]] + list(reversed(maxxfirst))[:reversemaxXidx]
-        else:
-            adjacentpoints = maxxfirst[0:maxxidx+1]
-
-        for i in range(-1+len(adjacentpoints)):
-            adjacentlines.append( LineString( [adjacentpoints[i] , adjacentpoints[i+1]] ) )
-            
+    if (-1 < mparallel < 1) or True:
+        # parallel line is more horizontal
+        #   so the parallel line will be for the ypath and ypath will not include the longest line
         
-        from geopandas import GeoSeries
-        from shapely import Point
-        ax=GeoSeries(polygon).plot()
-        # GeoSeries( adjacentlines ).plot(ax=ax, color="yellow")
-        # GeoSeries( LineString(longestline) ).plot(ax=ax, color="red")
-        plt.show()
+        ymaxfirst = coords[ymax:-1] + [coords[-1]] + coords[0:ymax]
+        ypath = []
+
+        for i in range(len(ymaxfirst)):
+            ypath.append([ymaxfirst[i], ymaxfirst[i+1]])
+
+            if ymaxfirst[i+1]==coords[ymin]:
+                break
+
+
+        if longestline[linep2idx][Y] > longestline[linep1idx][Y]:
+            longestline = [ longestline[linep2idx], longestline[linep1idx] ]
+
+        for line in ypath:
+            if line==[c for c in longestline]:
+                # Now we have to switch to the other ypath.
+                rcoords = list(reversed(coords))
+                rymax = len(coords)-ymax-1
+                
+                ymaxfirst = rcoords[rymax:-1] + [rcoords[-1]] + rcoords[0:rymax]
+                ypath = []
+
+                for i in range(len(ymaxfirst)):
+                    ypath.append([ymaxfirst[i], ymaxfirst[i+1]])
+                    if ymaxfirst[i+1]==coords[ymin]:
+                        break
+
+                break
+                
         
-    elif longestline[linep2idx][X]==maxxvalue:
-        """Only use adjacent lines down to the point with the smallest x value"""
 
-        for i in range(len(maxxfirst)):
-            if maxxfirst[i][X]==minxvalue: minxidx=i
-            if maxxfirst[i][X]==maxxvalue: maxxidx=i
-
-        if longestline[linep1idx]==maxxfirst[1]:
-            reverseminXidx = len(maxxfirst) - minxidx
-            adjacentpoints = [maxxfirst[0]] + list(reversed(maxxfirst))[:reverseminXidx]
-        else:
-            adjacentpoints = maxxfirst[0:minxidx+1]
-
-        for i in range(-1+len(adjacentpoints)):
-            adjacentlines.append( LineString( [adjacentpoints[i] , adjacentpoints[i+1]] ) )
+        # repeat the above process in the if statement for the xpath, then repeat all of this for the else case.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
+        
     else:
-        """Have to use adjacent lines in both directions"""
-        
+        # parallel line is more vertical
+        #   so the parallel line will be for the xpath and xpath will not include the longest line
+        pass
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    import geopandas
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="blue")
+    geopandas.GeoSeries([LineString(c) for c in ypath]).plot(ax=ax, color="green")
+    plt.show()
     
-    
-    adjacentlineindex = longestlineindex+1
-    if adjacentlineindex >= len(lines) : adjacentlineindex = 0
 
 
 
-    corner = None
-    for lcoord in lines[longestlineindex].coords:
-        for acoord in lines[adjacentlineindex].coords:
-            if lcoord==acoord:
-                corner = lcoord
 
-    return (lines[adjacentlineindex].coords, corner)
+
+
+
+
+
+
+
+
+
 
 
 
