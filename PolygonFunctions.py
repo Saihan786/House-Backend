@@ -94,38 +94,34 @@ def findAdjacentLines(polygon):
         # parallel line is more horizontal
         #   so the parallel line will be for the ypath and ypath will not include the longest line
         
-        ymaxfirst = coords[ymax:-1] + [coords[-1]] + coords[0:ymax]
-        ypath = []
+        if longestline[linep2idx][Y] > longestline[linep1idx][Y]:
+            longestline = [ longestline[linep2idx], longestline[linep1idx] ]
 
-        for i in range(len(ymaxfirst)):
+
+        if ymax > ymin:
+            ymaxfirst = coords[ymax:-1] + [coords[-1]] + coords[0:ymax]
+        else:
+            ymaxfirst = coords[ymax:ymin+1]
+
+        for i in range(-1+len(ymaxfirst)):
+            line = [ymaxfirst[i], ymaxfirst[i+1]]
+            if line==[c for c in longestline]:
+                # This path contains the longest line, so have to change it.
+
+                rcoords = list(reversed(coords))
+                rymax = len(coords)-ymax-1
+                ymaxfirst = rcoords[rymax:-1] + [rcoords[-1]] + rcoords[0:rymax]
+
+        
+        ypath = []
+        for i in range(-1+len(ymaxfirst)):
             ypath.append([ymaxfirst[i], ymaxfirst[i+1]])
 
             if ymaxfirst[i+1]==coords[ymin]:
                 break
-
-
-        if longestline[linep2idx][Y] > longestline[linep1idx][Y]:
-            longestline = [ longestline[linep2idx], longestline[linep1idx] ]
-
-        for line in ypath:
-            if line==[c for c in longestline]:
-                # Now we have to switch to the other ypath.
-                rcoords = list(reversed(coords))
-                rymax = len(coords)-ymax-1
                 
-                ymaxfirst = rcoords[rymax:-1] + [rcoords[-1]] + rcoords[0:rymax]
-                ypath = []
-
-                for i in range(len(ymaxfirst)):
-                    ypath.append([ymaxfirst[i], ymaxfirst[i+1]])
-                    if ymaxfirst[i+1]==coords[ymin]:
-                        break
-
-                break
                 
-        
-
-        # repeat the above process in the if statement for the xpath, then repeat all of this for the else case.
+        # repeat the above process for the xpath, then repeat all of this for the else case.
 
 
         
