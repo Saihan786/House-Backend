@@ -93,6 +93,13 @@ def findAdjacentLines(polygon):
     if (-1 < mparallel < 1) or True:
         # parallel line is more horizontal
         #   so the parallel line will be for the ypath and ypath will not include the longest line
+        #   and the perpendicular line will be for the xpath and xpath will include the longest line.
+        
+
+        def find_path(startpoint, endpoint, longestline):
+            """Returns a list of coordinate lines between the given points."""
+            pass
+
         
         if longestline[linep2idx][Y] > longestline[linep1idx][Y]:
             longestline = [ longestline[linep2idx], longestline[linep1idx] ]
@@ -112,12 +119,44 @@ def findAdjacentLines(polygon):
                 rymax = len(coords)-ymax-1
                 ymaxfirst = rcoords[rymax:-1] + [rcoords[-1]] + rcoords[0:rymax]
 
-        
         ypath = []
         for i in range(-1+len(ymaxfirst)):
             ypath.append([ymaxfirst[i], ymaxfirst[i+1]])
 
             if ymaxfirst[i+1]==coords[ymin]:
+                break
+        
+        
+
+
+        if longestline[linep2idx][X] < longestline[linep1idx][X]:
+            longestline = [ longestline[linep2idx], longestline[linep1idx] ]
+
+        if xmin > xmax:
+            xminfirst = coords[xmin:-1] + [coords[-1]] + coords[0:xmin]
+        else:
+            xminfirst = coords[xmin:xmax+1]
+        
+
+        containsLongest = False
+        for i in range(-1+len(xminfirst)):
+            line = [xminfirst[i], xminfirst[i+1]]
+            if line==[c for c in longestline]:
+                # This path contains the longest line, so don't have to change it.
+                containsLongest = True
+                
+        if not containsLongest:
+            # change this path
+                rcoords = list(reversed(coords))
+                rxmin = len(coords)-xmin-1
+                xminfirst = rcoords[rxmin:-1] + [rcoords[-1]] + rcoords[0:rxmin]
+        
+
+        xpath = []
+        for i in range(-1+len(xminfirst)):
+            xpath.append([xminfirst[i], xminfirst[i+1]])
+
+            if xminfirst[i+1]==coords[xmax]:
                 break
                 
                 
@@ -135,7 +174,7 @@ def findAdjacentLines(polygon):
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots()
     geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="blue")
-    geopandas.GeoSeries([LineString(c) for c in ypath]).plot(ax=ax, color="green")
+    geopandas.GeoSeries([LineString(c) for c in xpath]).plot(ax=ax, color="green")
     plt.show()
     
 
