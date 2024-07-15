@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import LineFunctions
 
 
+
 X,Y = 0,1
 linep1idx, linep2idx = 0, 1
 
@@ -110,12 +111,14 @@ def find_path(coords, startpoint, endpoint, longestline, pathIsHorizontal, shoul
         return path
     
 
-def findLinePaths(polygon):
+def findLinePaths(polygon, showPaths=False):
     """Returns linePathX and linePathY which are each associated with a parallel/perpendicular line.
 
     Returns [ (linePathX, gradient) , (linePathY, gradient) ]
 
     Line paths are used instead of the corner to plot houses. They are lists of lines.
+        Instead of plotting from the corner, the xpath will be used to plot from xmin and
+        the ypath will be used to plot from ymax.
 
     The gradients are for the lines that will be plotted from the line paths.
 
@@ -135,7 +138,6 @@ def findLinePaths(polygon):
             ymin = idx
         elif coords[idx][Y] > coords[ymax][Y]:
             ymax = idx
-
     
     longestline = findLongestLine(polygon)    
     mparallel, c, isV = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
@@ -148,9 +150,9 @@ def findLinePaths(polygon):
         
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=False)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=True)
-            
+        #     Returns [ (linePathX, gradient) , (linePathY, gradient) ]
+        retval = [(xpath, mperp), (ypath, mparallel)]
 
-        # now repeat all of this for the else case.
         
     else:
         # parallel line is more vertical
@@ -159,29 +161,22 @@ def findLinePaths(polygon):
 
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=True)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=False)
-        
-    import geopandas
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="blue")
-    geopandas.GeoSeries([LineString(c) for c in xpath]).plot(ax=ax, color="green")
-    plt.show()
+        retval = [(xpath, mparallel), (ypath, mperp)]
+
+
+    if showPaths:
+        fig, ax = plt.subplots()
+        geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="blue")
+        geopandas.GeoSeries([LineString(c) for c in xpath]).plot(ax=ax, color="green")
+
+        fig, ax = plt.subplots()
+        geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="blue")
+        geopandas.GeoSeries([LineString(c) for c in ypath]).plot(ax=ax, color="green")
+
+        plt.show()
+
+    return retval
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 from RedLinePlot import getRLP, getPath
 rlp = getRLP(getPath())
@@ -189,7 +184,7 @@ rlp = rlp.to_crs(epsg=27700)
 rlp["name"] = ["rlp"]
 rlppolygon = rlp.geometry[0]
 
-findLinePaths(rlppolygon)
+findLinePaths(rlppolygon, showPaths=True)
 
 
 
