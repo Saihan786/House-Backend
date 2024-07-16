@@ -112,62 +112,101 @@ def plotProportions(housetypes, unitPolygons, proportions):
     llpadding, alpadding = 5, 5
 
 
-    longestline, adjacentline, corner = PolygonFunctions.lines(rlppolygon)
-    lleq, aleq = LineFunctions.leqs(longestline), LineFunctions.leqs(adjacentline)
+    longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
-    PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
-
+    (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
 
-    
-    llpaddedpoint = (corner[0], LineFunctions.lineyval(lleq, (corner[0])))
-    alpaddedpoint = (corner[0], LineFunctions.lineyval(aleq, (corner[0])))
-    
-    nlleq = LineFunctions.normalLineEQ(lleq, llpaddedpoint)
 
-    
+    xleqs = []
+    for xline in linePathX:
+        # plot every line only using equations and points
+        
+        xleq = LineFunctions.lineEQ(xline[linep1idx], xline[linep2idx])
+        p1 = xline[linep1idx]
+        p2 = xline[linep2idx]
+
+        x = p1[X]+10
+        y = LineFunctions.lineyval(xleq, x)
+        point = Point(x, y)
+
+        xleqs.append(xleq)
+
+
+
+
     newRow = True
     for htindex in range(len(housetypes)):
+        geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+
         ht = housetypes[htindex]
         freq = proportions[htindex]
         unitPolygon = unitPolygons[htindex]
 
-        geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+        plotlineEQ = (mX, xleqs[0][1], xleqs[0][2])
+        c = LineFunctions.linecval(mX, linePathX[0][linep1idx])
+        leq = (mX, c, False)
+
+        l1 = LineFunctions.leqtoline(leq, rlppolygon)
+        print(l1)
+        
+        geopandas.GeoSeries( l1 ).plot(ax=ax, color="red")
+        plt.show()
+
+
 
         for housecount in range(freq):
             if newRow:
-                # use perpendicular line to begin house placement on a new row
-                # (llpadding and?) naleq should change for every new row
-                # 
-                initNewRow(unitPolygon)
                 newRow = False
 
-                if rlppolygon.contains(Point(alpaddedpoint)):
-                    print(alpaddedpoint[X])
-                    geopandas.GeoSeries( Point(alpaddedpoint) ).plot(ax=ax, color="red")
-
-                alpaddedpoint = (alpaddedpoint[X]-alpadding, LineFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
-
             else:
-                # use parallel line (parallel to longestline) to continue house placement from initial house
-                # housepadding should never change
-                # llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
-                # while rlppolygon.contains(Point(llpaddedpoint)):
-                for i in range(1):
-                    plotRow()
-
-                    nlleq = LineFunctions.normalLineEQ(lleq, llpaddedpoint)
-                    nlline = LineFunctions.leqtoline(nlleq, rlppolygon)
-                    
-                    if rlppolygon.contains(Point(llpaddedpoint)):
-                        geopandas.GeoSeries( Point(llpaddedpoint) ).plot(ax=ax, color="red")
-                        geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
-                        # pass
-
-                    llpaddedpoint = (llpaddedpoint[X]+llpadding, LineFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
                 newRow = True
+        
+        break
+
+
+
+
+
+    
+    # newRow = True
+    # for htindex in range(len(housetypes)):
+    #     ht = housetypes[htindex]
+    #     freq = proportions[htindex]
+    #     unitPolygon = unitPolygons[htindex]
+
+    #     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+
+    #     for housecount in range(freq):
+    #         if newRow:
+    #             # 
+
+    #             initNewRow(unitPolygon)
+    #             newRow = False
+
+
+    #             alpaddedpoint = (alpaddedpoint[X]-alpadding, LineFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
+
+    #         else:
+    #             # use parallel line (parallel to longestline) to continue house placement from initial house
+    #             # housepadding should never change
+    #             # llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
+    #             # while rlppolygon.contains(Point(llpaddedpoint)):
+    #             for i in range(1):
+    #                 plotRow()
+
+    #                 nlleq = LineFunctions.normalLineEQ(lleq, llpaddedpoint)
+    #                 nlline = LineFunctions.leqtoline(nlleq, rlppolygon)
+                    
+    #                 if rlppolygon.contains(Point(llpaddedpoint)):
+    #                     geopandas.GeoSeries( Point(llpaddedpoint) ).plot(ax=ax, color="red")
+    #                     geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
+    #                     # pass
+
+    #                 llpaddedpoint = (llpaddedpoint[X]+llpadding, LineFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
+    #             newRow = True
             
-    plt.show()
+    # plt.show()
 
 
 
