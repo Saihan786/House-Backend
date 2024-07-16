@@ -93,7 +93,11 @@ def isParallel(line1, line2):
     
 
 def leqtoline(leq, polygon):
-        """Returns a line for a line equation. The returned line touches the edges of the polygon."""
+        """Returns a line for a line equation. The returned line touches the edges of the polygon.
+        
+        The returned line is a LineString.
+        
+        """
 
         minxval = maxxval = polygon.exterior.coords[0][X]
         for coord in polygon.exterior.coords:
@@ -109,7 +113,7 @@ def leqtoline(leq, polygon):
 
 
 def leqs(line):
-    """Returns the line equation for a line."""
+    """Returns the line equation for two points that are in a tuple."""
     return lineEQ(line[linep1idx], line[linep2idx])
 
 
@@ -141,3 +145,17 @@ def lineyval(leq, x):
     
     m, c, isVertical = leq
     return (m*x + c)
+
+
+def linexval(leq, y):
+    """Returns the x value of a line equation given the y value."""
+    
+    m, c, isVertical = leq
+    return ((y - c)/m)
+
+
+def linecval(m, p):
+    """Returns the c value of a line with gradient m that goes through point p."""
+    
+    x, y = p
+    return y-(m*x)

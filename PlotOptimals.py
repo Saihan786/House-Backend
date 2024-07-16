@@ -85,7 +85,9 @@ def initNewRow(unitPolygon, lleq=None, padding=5):
 
 
 def plotRow():
-    """Plots a whole row, given the parallel eq for the longest line AND the initial house coordinates for this row.
+    """ Continues to plot this row, using the correct unitPolygon.
+    
+    Plots a whole row, given the parallel eq for the longest line AND the initial house coordinates for this row.
     
     An initialised row has an initial house padded correctly, so this method doesn't need to worry about perpendicular padding. All this
     function does is pads new houses from the previous (starting at initial) house parallel to the longest line.
@@ -111,102 +113,107 @@ def plotProportions(housetypes, unitPolygons, proportions):
     linep1idx, linep2idx = 0, 1
     llpadding, alpadding = 5, 5
 
+    # change to be housepadding and rowpadding afterwards
+    # also the values here should start out as width and height of the unitpolygon plus a bit
+    xpadding, ypadding = 30, 50
+
 
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
-    (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
+    (linePathX, mX, isPerp), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
 
-
-    xleqs = []
+    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+    xlines = []
     for xline in linePathX:
-        # plot every line only using equations and points
-        
         xleq = LineFunctions.lineEQ(xline[linep1idx], xline[linep2idx])
         p1 = xline[linep1idx]
         p2 = xline[linep2idx]
 
-        x = p1[X]+10
-        y = LineFunctions.lineyval(xleq, x)
-        point = Point(x, y)
+        x = p1[X]
+        while x<p2[X]:
+            y = LineFunctions.lineyval(xleq, x)
+            
+            point = (x,y)
+            c = LineFunctions.linecval(mX, point)
+            leq = (mX, c, False)
+            line = LineFunctions.leqtoline(leq, rlppolygon)
+            xlines.append(line)
+            # geopandas.GeoSeries( line ).plot(ax=ax, color="red")
+            
+            x+=xpadding
+            
+    housepoints = []
+    for yline in linePathY:
+        yleq = LineFunctions.lineEQ(yline[linep1idx], yline[linep2idx])
+        p1 = yline[linep1idx]
+        p2 = yline[linep2idx]
 
-        xleqs.append(xleq)
+        y = p1[Y]
+        while y>p2[Y]:
+            x = LineFunctions.linexval(yleq, y)
+            
+            point = (x,y)
+            c = LineFunctions.linecval(mY, point)
+            leq = (mY, c, False)
+            line = LineFunctions.leqtoline(leq, rlppolygon)
+            
+            # geopandas.GeoSeries( line ).plot(ax=ax, color="green")
 
-
-
-
-    newRow = True
-    for htindex in range(len(housetypes)):
-        geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
-
-        ht = housetypes[htindex]
-        freq = proportions[htindex]
-        unitPolygon = unitPolygons[htindex]
-
-        plotlineEQ = (mX, xleqs[0][1], xleqs[0][2])
-        c = LineFunctions.linecval(mX, linePathX[0][linep1idx])
-        leq = (mX, c, False)
-
-        l1 = LineFunctions.leqtoline(leq, rlppolygon)
-        print(l1)
-        
-        geopandas.GeoSeries( l1 ).plot(ax=ax, color="red")
-        plt.show()
-
-
-
-        for housecount in range(freq):
-            if newRow:
-                newRow = False
-
-            else:
-                newRow = True
-        
-        break
-
-
-
-
+            for xl in xlines:
+                housepoint = intersection(line, xl)
+                if not housepoint.is_empty:
+                    housepoints.append(housepoint)
+                    # geopandas.GeoSeries( housepoint ).plot(ax=ax, color="green")
+            
+            y-=ypadding
+    
 
     
+    houses = []
+    rotatedUP = PolygonFunctions.rotatePolygon(LineString(longestline), unitPolygons[0])
+    rotatedUP = PolygonFunctions.moveToOrigin(rotatedUP, showTranslation=False)
+
+    for housepoint in housepoints:
+        corners = []
+        for corner in rotatedUP.exterior.coords[:-1]:
+            corners.append( (corner[X]+housepoint.coords[0][X] , corner[Y]+housepoint.coords[0][Y]) )
+        houses.append(Polygon(corners))
+    
+    houses = [house for house in houses if rlppolygon.contains(house)]
+
+    distincthouses = []
+    for i in range(-1+len(houses)):
+        keepHouse = True
+        for j in range(i+1, len(houses)):
+            if houses[i].intersects(houses[j]):
+                keepHouse = False
+        if keepHouse:
+            distincthouses.append(houses[i])
+
+    print(len(distincthouses))
+    geopandas.GeoSeries([house.exterior for house in distincthouses]).plot(ax=ax, color="green")
+    plt.show()
+
+
     # newRow = True
     # for htindex in range(len(housetypes)):
+    #     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+
     #     ht = housetypes[htindex]
     #     freq = proportions[htindex]
     #     unitPolygon = unitPolygons[htindex]
 
-    #     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+
 
     #     for housecount in range(freq):
     #         if newRow:
-    #             # 
-
-    #             initNewRow(unitPolygon)
     #             newRow = False
 
-
-    #             alpaddedpoint = (alpaddedpoint[X]-alpadding, LineFunctions.lineyval(aleq, (alpaddedpoint[X]-alpadding)))
-
     #         else:
-    #             # use parallel line (parallel to longestline) to continue house placement from initial house
-    #             # housepadding should never change
-    #             # llpaddedpoint = (llpaddedpoint[X]-5, ShapeFunctions.lineyval(lleq, (llpaddedpoint[X]-5))) # to be moved to plotRow()
-    #             # while rlppolygon.contains(Point(llpaddedpoint)):
-    #             for i in range(1):
-    #                 plotRow()
-
-    #                 nlleq = LineFunctions.normalLineEQ(lleq, llpaddedpoint)
-    #                 nlline = LineFunctions.leqtoline(nlleq, rlppolygon)
-                    
-    #                 if rlppolygon.contains(Point(llpaddedpoint)):
-    #                     geopandas.GeoSeries( Point(llpaddedpoint) ).plot(ax=ax, color="red")
-    #                     geopandas.GeoSeries( nlline ).plot(ax=ax, color="green")
-    #                     # pass
-
-    #                 llpaddedpoint = (llpaddedpoint[X]+llpadding, LineFunctions.lineyval(lleq, (llpaddedpoint[X]+llpadding))) # to be moved to plotRow()
     #             newRow = True
-            
-    # plt.show()
+        
+    #     break
 
 
 

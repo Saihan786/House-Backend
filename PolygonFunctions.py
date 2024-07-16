@@ -114,7 +114,7 @@ def find_path(coords, startpoint, endpoint, longestline, pathIsHorizontal, shoul
 def findLinePaths(polygon, showPaths=False):
     """Returns linePathX and linePathY which are each associated with a parallel/perpendicular line.
 
-    Returns [ (linePathX, gradient) , (linePathY, gradient) ]
+    Returns [ (linePathX, gradient, isPerp) , (linePathY, gradient) ]
 
     Line paths are used instead of the corner to plot houses. They are lists of lines.
         Instead of plotting from the corner, the xpath will be used to plot from xmin and
@@ -151,7 +151,7 @@ def findLinePaths(polygon, showPaths=False):
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=False)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=True)
         #     Returns [ (linePathX, gradient) , (linePathY, gradient) ]
-        retval = [(xpath, mperp), (ypath, mparallel)]
+        retval = ((xpath, mperp, True), (ypath, mparallel))
 
         
     else:
@@ -161,7 +161,7 @@ def findLinePaths(polygon, showPaths=False):
 
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=True)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=False)
-        retval = [(xpath, mparallel), (ypath, mperp)]
+        retval = ((xpath, mparallel, False), (ypath, mperp))
 
 
     if showPaths:
@@ -176,19 +176,6 @@ def findLinePaths(polygon, showPaths=False):
         plt.show()
 
     return retval
-    
-
-from RedLinePlot import getRLP, getPath
-rlp = getRLP(getPath())
-rlp = rlp.to_crs(epsg=27700)
-rlp["name"] = ["rlp"]
-rlppolygon = rlp.geometry[0]
-
-findLinePaths(rlppolygon, showPaths=True)
-
-
-
-
 
 
 def lines(polygon):
