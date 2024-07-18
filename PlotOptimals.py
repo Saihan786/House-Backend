@@ -2,7 +2,7 @@
 # might be easier to work with one housetype for now
 
 import geopandas.geoseries
-from HRGenerator import ManageHouseTypes, generateBestTypes
+from HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
 import matplotlib.pyplot as plt
 from RedLinePlot import getRLP, getPath
 from shapely import Polygon, LineString, affinity, Point, intersection
@@ -42,62 +42,8 @@ def makeUnitPolygons(housetypes):
         point3 = (0,0+ht[LENGTH])
         point4 = (0+ht[WIDTH],0+ht[LENGTH])
         unitPolygons.append(Polygon([point1, point2, point4, point3, point1]))
-        
-    # geopandas.GeoSeries(unitPolygons).plot()
-    # for polygon in unitPolygons:
-    #     plt.plot(*polygon.exterior.xy)
-    # plt.show()
 
     return unitPolygons
-
-
-def initNewRow(unitPolygon, lleq=None, padding=5):
-    """Places a unitPolygon parallel to the longest edge of the rlp.
-    
-    The unit polygon is rotated to be aligned with the longest edge and padded from the longest and adjacent lines
-    to start a new row.
-
-    This method receives the two normal line equations and padding and uses these to place the new initial house.
-    
-    """
-
-    linep1, linep2 = 0, 1
-
-    def showRotation(longestline, unitPolygon):
-        visibleLine = [(x-534300, y-182500) for (x,y) in longestline]
-        PolygonFunctions.rotatePolygon(LineString(visibleLine), unitPolygon, showRotation=True)
-
-
-    # rotate unit polygon
-    
-    longestline = PolygonFunctions.findLongestLine(rlppolygon)
-    longestline = LineFunctions.orderLine(longestline)
-
-    
-    rotatedUP = PolygonFunctions.rotatePolygon(LineString(longestline), unitPolygon)
-    rotatedUP = PolygonFunctions.moveToOrigin(rotatedUP, showTranslation=False)
-
-
-    # find normal lines and set initial house padded from longestline and adjacent line with GIVEN padding to place houses in new row
-    #       (so this method should only plot initial houses at each row of GIVEN padding using perpendicular lines)
-
-
-
-
-def plotRow():
-    """ Continues to plot this row, using the correct unitPolygon.
-    
-    Plots a whole row, given the parallel eq for the longest line AND the initial house coordinates for this row.
-    
-    An initialised row has an initial house padded correctly, so this method doesn't need to worry about perpendicular padding. All this
-    function does is pads new houses from the previous (starting at initial) house parallel to the longest line.
-    
-    If obstacles are present, the best solution may be to plot from two adjacent lines and see when currCoords overlap to see if
-    an obstacle is reached or if the end of the rlp is reached.
-    
-    """
-
-    pass
     
 
 def plotProportions(housetypes, unitPolygons, proportions):
@@ -111,7 +57,6 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
     fig, ax = plt.subplots()
     linep1idx, linep2idx = 0, 1
-    llpadding, alpadding = 5, 5
 
     # change to be housepadding and rowpadding afterwards
     # also the values here should start out as width and height of the unitpolygon plus a bit
@@ -123,6 +68,7 @@ def plotProportions(housetypes, unitPolygons, proportions):
     (linePathX, mX, isPerp), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
 
+    geopandas.GeoSeries(rlppolygon.exterior).plot(color="blue")
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     xlines = []
     for xline in linePathX:
@@ -196,36 +142,15 @@ def plotProportions(housetypes, unitPolygons, proportions):
     plt.show()
 
 
-    # newRow = True
-    # for htindex in range(len(housetypes)):
-    #     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
-
-    #     ht = housetypes[htindex]
-    #     freq = proportions[htindex]
-    #     unitPolygon = unitPolygons[htindex]
-
-
-
-    #     for housecount in range(freq):
-    #         if newRow:
-    #             newRow = False
-
-    #         else:
-    #             newRow = True
-        
-    #     break
-
-
-
-
 mht = ManageHouseTypes()
 fillMHT(mht)
 housetypes = mht.getHouseTypes()
 
 unitPolygons = makeUnitPolygons(housetypes)
 
-(proportions, profit) = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
-plotProportions(housetypes, unitPolygons, proportions)
+basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
+
+plotProportions(housetypes, unitPolygons, basicproportions)
 
 
 

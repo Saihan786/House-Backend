@@ -105,17 +105,20 @@ def generateBasicTypes(housetypes, budget=500, maxsize=500, showResults=False):
     
     This result is more generally applicable than generateBestTypes() as the values can be used to guide
     a plotting process rather than forcing a particular number of houses.
+
+    For now, I will round the proportions to integers.
     
     """
 
     (proportions, profit) = generateBestTypes(housetypes, budget, maxsize)
 
-
     proportions = [55, 120, 84, 150]
     
-
     minproportion = min([p for p in proportions if p!=0])
     basicproportions = [p/minproportion for p in proportions]
+    basicproportions = [round(p) for p in basicproportions]
+
+    if showResults: print("The proportions are:", basicproportions)
 
     return (basicproportions)
 
