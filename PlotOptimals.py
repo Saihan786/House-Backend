@@ -13,7 +13,6 @@ import PolygonFunctions
 import LineFunctions    
 
 
-NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
 X, Y = 0, 1
 
 rlp = getRLP(getPath())
@@ -38,9 +37,9 @@ def makeUnitPolygons(housetypes):
     for ht in housetypes:
         # (name, revenue, cost, width, length, size)
         point1 = (0,0)
-        point2 = (0+ht[WIDTH],0)
-        point3 = (0,0+ht[LENGTH])
-        point4 = (0+ht[WIDTH],0+ht[LENGTH])
+        point2 = (0+ht.WIDTH,0)
+        point3 = (0,0+ht.LENGTH)
+        point4 = (0+ht.WIDTH,0+ht.LENGTH)
         unitPolygons.append(Polygon([point1, point2, point4, point3, point1]))
 
     return unitPolygons
@@ -54,6 +53,10 @@ def plotProportions(housetypes, unitPolygons, proportions):
     Unit polygons are copied and moved around the rlp to create new houses.
     
     """
+    
+    for ht in housetypes:
+        print(ht.NAME)
+        print(ht.PROPORTION)
 
     fig, ax = plt.subplots()
     linep1idx, linep2idx = 0, 1
@@ -137,9 +140,8 @@ def plotProportions(housetypes, unitPolygons, proportions):
         if keepHouse:
             distincthouses.append(houses[i])
 
-    print(len(distincthouses))
     geopandas.GeoSeries([house.exterior for house in distincthouses]).plot(ax=ax, color="green")
-    plt.show()
+    # plt.show()
 
 
 mht = ManageHouseTypes()
@@ -149,9 +151,8 @@ housetypes = mht.getHouseTypes()
 unitPolygons = makeUnitPolygons(housetypes)
 
 basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
-
+mht.addProportions(basicproportions)
 plotProportions(housetypes, unitPolygons, basicproportions)
-
 
 
 

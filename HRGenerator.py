@@ -9,16 +9,43 @@ from math import floor
 #   remove budget constraint
 #   other constraints from Dan
 
+class HouseType():
+    NAME=""
+    REVENUE=0
+    COST=0
+    WIDTH=0
+    LENGTH=0
+    SIZE=0
+    PROPORTION=False
+
+    def __init__(self, name, revenue, cost, width, length, size):
+        self.NAME=name
+        self.REVENUE=revenue
+        self.COST=cost
+        self.WIDTH=width
+        self.LENGTH=length
+        self.SIZE=size
+    
+    def addProportion(self, proportion):
+        self.PROPORTION = proportion
+        
+    def toList(self):
+        return [self.NAME, self.REVENUE, self.COST, self.WIDTH, self.LENGTH, self.SIZE, self.PROPORTION]
+    
+    def printStats(self):
+        print("NAME:", self.NAME)
+        print("REVENUE:", self.REVENUE)
+        print("COST:", self.COST)
+        print("WIDTH:", self.WIDTH)
+        print("LENGTH:", self.LENGTH)
+        print("SIZE:", self.SIZE)
+        print("PROPORTION:", self.PROPORTION)
+
+
 class ManageHouseTypes():
     houseTypes = []
 
     def __init__(self):
-        self.NAME=0
-        self.REVENUE=1
-        self.COST=2
-        self.WIDTH=3
-        self.LENGTH=4
-        self.SIZE=5
         self.houseTypes = []
     
     def userAddNewHouseType(self):
@@ -29,19 +56,24 @@ class ManageHouseTypes():
         length = input("Enter the length in metres of one ", name, " house: ")
         size = float(width) * float(length)
 
-        self.houseTypes.append( (name, revenue, cost, width, length, size) )
+        self.houseTypes.append( HouseType(name, revenue, cost, width, length, size) )
 
     def addNewHouseType(self, name, revenue, cost, width, length):
         size = float(width) * float(length)
-        self.houseTypes.append( (name, revenue, cost, width, length, size) )
+        self.houseTypes.append( HouseType(name, revenue, cost, width, length, size) )
+
+    def addProportions(self, proportions):
+        if len(proportions)==len(self.houseTypes):
+            for i in range(len(proportions)):
+                self.houseTypes[i].addProportion(proportions[i])
 
     def getHouseTypes(self):
         return self.houseTypes
 
     def printHouseTypes(self):
         for housetype in self.houseTypes:
-            print("There is a housetype called", housetype[self.NAME], "which costs", housetype[self.COST], "pounds and has a revenue of", housetype[self.REVENUE], "pounds")
-            print("It is", housetype[self.WIDTH], "metres wide and", housetype[self.LENGTH], "metres long and has a size of", housetype[self.SIZE], "squared metres")
+            print("There is a housetype called", housetype.NAME, "which costs", housetype.COST, "pounds and has a revenue of", housetype.REVENUE, "pounds")
+            print("It is", housetype.WIDTH, "metres wide and", housetype.LENGTH, "metres long and has a size of", housetype.SIZE, "squared metres")
             print()
         print()
 
@@ -84,14 +116,13 @@ def generateBestTypes(housetypes, budget=500, maxsize=500, showResults=False):
     
     """
 
-    NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
     names, revenues, costs, sizes = [], [], [], []
 
     for housetype in housetypes:
-        names.append(housetype[NAME])
-        revenues.append(housetype[REVENUE])
-        costs.append(housetype[COST])
-        sizes.append(housetype[SIZE])
+        names.append(housetype.NAME)
+        revenues.append(housetype.REVENUE)
+        costs.append(housetype.COST)
+        sizes.append(housetype.SIZE)
     
     (proportions, profit) = simplexmax(revenues, costs, sizes, budget, maxsize)
 
@@ -112,8 +143,6 @@ def generateBasicTypes(housetypes, budget=500, maxsize=500, showResults=False):
 
     (proportions, profit) = generateBestTypes(housetypes, budget, maxsize)
 
-    proportions = [55, 120, 84, 150]
-    
     minproportion = min([p for p in proportions if p!=0])
     basicproportions = [p/minproportion for p in proportions]
     basicproportions = [round(p) for p in basicproportions]
