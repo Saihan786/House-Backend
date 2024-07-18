@@ -46,8 +46,9 @@ class ManageHouseTypes():
         print()
 
 
-# returns resulting proportions of housetypes and profit achieved using simplex to maximise the profit
 def simplexmax(revenues, costs, sizes, budget, maxsize):
+    """Calculates and returns the optimal proportion of houses of housetypes using simplex."""
+
     objective = [-1*x for x in revenues]
     ineq_coeffs = [costs] + [sizes]
     ineq_values = [budget, maxsize]
@@ -66,15 +67,23 @@ def simplexmax(revenues, costs, sizes, budget, maxsize):
     
     return (proportions, totalprofit)
 
+
 def printResults(proportions, profit, names):
+    """Prints results of generation in easily-readable format."""
+
     print("The best solution is to have: ")
     for i in range(len(proportions)):
         print("     ", proportions[i], "houses of housetype", names[i])
     print("The total profit is", profit, "pounds.")
 
-# Objective function is to maximise profit
-# Basic constraints of total cost are to be within budget and to be within rlp size
+
 def generateBestTypes(housetypes, budget=500, maxsize=500, showResults=False):
+    """Returns a list of the optimal number of houses of each type, and overall profit separately.
+    
+    Can be used to check if an answer is optimal.
+    
+    """
+
     NAME, REVENUE, COST, WIDTH, LENGTH, SIZE = 0, 1, 2, 3, 4, 5
     names, revenues, costs, sizes = [], [], [], []
 
@@ -90,6 +99,25 @@ def generateBestTypes(housetypes, budget=500, maxsize=500, showResults=False):
     
     return (proportions, profit)
 
+
+def generateBasicTypes(housetypes, budget=500, maxsize=500, showResults=False):
+    """Returns a list of basic integer proportions of each housetype.
+    
+    This result is more generally applicable than generateBestTypes() as the values can be used to guide
+    a plotting process rather than forcing a particular number of houses.
+    
+    """
+
+    (proportions, profit) = generateBestTypes(housetypes, budget, maxsize)
+
+
+    proportions = [55, 120, 84, 150]
+    
+
+    minproportion = min([p for p in proportions if p!=0])
+    basicproportions = [p/minproportion for p in proportions]
+
+    return (basicproportions)
 
 
 def examples():
