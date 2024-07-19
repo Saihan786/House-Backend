@@ -88,7 +88,8 @@ def allPerpendicularLines(path, m, distance, isHorizontal):
                 lines.append(newline)
 
                 y-=distance
-    
+   
+   
     return lines
 
 
@@ -179,34 +180,18 @@ def plotProportions(housetypes, unitPolygons, proportions):
 
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
-    (linePathX, mX, isPerp), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
+    (linePathX, mX, horizontalIsPerp), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
     xlines = allPerpendicularLines(linePathX, mX, xpadding, isHorizontal=True)
-            
+    ylines = allPerpendicularLines(linePathY, mY, ypadding, isHorizontal=False)            
+    
     housepoints = []
-    for yline in linePathY:
-        yleq = LineFunctions.lineEQ(yline[linep1idx], yline[linep2idx])
-        p1 = yline[linep1idx]
-        p2 = yline[linep2idx]
+    for xl in xlines:
+        for yl in ylines:
+            housepoint = intersection(yl, xl)
+            if not housepoint.is_empty:
+                housepoints.append(housepoint)
 
-        y = p1[Y]
-        while y>p2[Y]:
-            x = LineFunctions.linexval(yleq, y)
-            
-            point = (x,y)
-            c = LineFunctions.linecval(mY, point)
-            leq = (mY, c, False)
-            line = LineFunctions.leqtoline(leq, rlppolygon)
-            
-            # geopandas.GeoSeries( line ).plot(ax=ax, color="green")
-
-            for xl in xlines:
-                housepoint = intersection(line, xl)
-                if not housepoint.is_empty:
-                    housepoints.append(housepoint)
-                    # geopandas.GeoSeries( housepoint ).plot(ax=ax, color="green")
-            
-            y-=ypadding
     plotHouses(housepoints, unitPolygons, longestline, ax)
     plt.show()
 
