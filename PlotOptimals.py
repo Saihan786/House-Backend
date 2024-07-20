@@ -45,6 +45,57 @@ def makeUnitPolygons(housetypes):
     return unitPolygons
 
 
+def findPadding(unitPolygons, longestline):
+    """Returns housepadding and rowpadding.
+    
+    Housepadding is the largest parallel length of all unit polygons with a bit added.
+    Rowpadding is the largest perpendicular length of all unit polygons with a bit added.
+
+    Padding is calculated iteratively.
+    
+    """
+
+    def calculateDistance(leq, padding=0, increment=10, showDistance=False):
+        """Returns the (slightly increased) distance across the largest polygon, with respect to the
+        given line equation.
+        
+        """
+        
+        originalx = 0
+        originaly = LineFunctions.lineyval(leq, originalx)
+
+        allups = []
+
+        for up in unitPolygons:
+            up1 = up2 = Polygon( [(c[X]+originalx,c[Y]+originaly) for c in list(up.exterior.coords)] )
+
+            x=0
+            while up1.intersects(up2):
+                x += increment
+                y = LineFunctions.lineyval(leq, x)
+                up2 = Polygon( [(c[X]+x,c[Y]+y) for c in list(up.exterior.coords)] )
+            
+            distance = np.sqrt(np.square(x-originalx) + np.square(y-originaly))
+            if padding<distance : padding = distance
+
+            allups.append(up1)
+            allups.append(up2)
+        
+        if showDistance:
+            geopandas.GeoSeries([up.exterior for up in allups]).plot()
+            plt.show()
+
+        return padding
+
+    leq = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
+    housepadding = calculateDistance(leq, showDistance=False)
+
+    nleq = LineFunctions.normalLineEQ(leq, longestline[linep1idx])
+    rowpadding = calculateDistance(nleq, showDistance=True)
+
+    return (housepadding, rowpadding)
+
+
 def allPerpendicularLines(path, m, distance, isHorizontal):
     """Returns a list of all new lines, each from a point on the lines of the given path.
 
@@ -93,57 +144,18 @@ def allPerpendicularLines(path, m, distance, isHorizontal):
     return lines
 
 
-def allHousePoints(path):
-    """Returns a list of all housepoints.
-
-    Each housepoint indicates where a house will be placed, and is an intersection
-    between a line from the given lines and one of the newlines
-
-    The points are equidistant from each other at a given distance.
-    
-    The new lines have the given gradient m.
-    
-    """
-    
-    housepoints = []
-    for yline in path:
-        yleq = LineFunctions.lineEQ(yline[linep1idx], yline[linep2idx])
-        p1 = yline[linep1idx]
-        p2 = yline[linep2idx]
-
-        y = p1[Y]
-        while y>p2[Y]:
-            x = LineFunctions.linexval(yleq, y)
-            
-            point = (x,y)
-            c = LineFunctions.linecval(mY, point)
-            leq = (mY, c, False)
-            line = LineFunctions.leqtoline(leq, rlppolygon)
-            
-            for xl in xlines:
-                housepoint = intersection(line, xl)
-                if not housepoint.is_empty:
-                    housepoints.append(housepoint)
-                    # geopandas.GeoSeries( housepoint ).plot(ax=ax, color="green")
-            
-            y-=ypadding
-
-
-def plotHouses(housepoints, unitPolygons, longestline, ax):
+def plotHouses(housepoints, unitPolygon, ax):
     """Plots houses using housepoints as locations for houses.
 
     need to change because only uses one unitpolygon for now
-    need to make more cohesive (shouldn't rotate polygons as well)
     
     """
 
     houses = []
-    rotatedUP = PolygonFunctions.rotatePolygon(LineString(longestline), unitPolygons[0])
-    rotatedUP = PolygonFunctions.moveToOrigin(rotatedUP, showTranslation=False)
 
     for housepoint in housepoints:
         corners = []
-        for corner in rotatedUP.exterior.coords[:-1]:
+        for corner in unitPolygon.exterior.coords[:-1]:
             corners.append( (corner[X]+housepoint.coords[0][X] , corner[Y]+housepoint.coords[0][Y]) )
         houses.append(Polygon(corners))
     
@@ -167,33 +179,47 @@ def plotProportions(housetypes, unitPolygons, proportions):
     The number of houses of each ht depends on its proportion in proportions.
     
     Unit polygons are copied and moved around the rlp to create new houses.
+
+    Housepadding is for perp lines, while Rowpadding is for parallel lines.
     
     """
+
+    longestline = PolygonFunctions.findLongestLine(rlppolygon)
+    unitPolygons = [PolygonFunctions.rotatePolygon(LineString(longestline), uP, showRotation=False) for uP in unitPolygons]
+    unitPolygons = [PolygonFunctions.moveToOrigin(uP, showTranslation=False) for uP in unitPolygons]
+
+    horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
+
+
+
+
+    # also the values here should start out as width and length of the unitpolygon plus a bit
+    housepadding, rowpadding = findPadding(unitPolygons, longestline)
+
+    # housepadding, rowpadding = 30, 50
+
+
+
+    if horizontal_has_longest:
+        perpLines = allPerpendicularLines(linePathX, mX, housepadding, isHorizontal=True)
+        parallelLines = allPerpendicularLines(linePathY, mY, rowpadding, isHorizontal=False)            
+    else:
+        perpLines = allPerpendicularLines(linePathX, mX, rowpadding, isHorizontal=True)
+        parallelLines = allPerpendicularLines(linePathY, mY, housepadding, isHorizontal=False)            
+    
+    housepoints = []
+    for l1 in perpLines:
+        for l2 in parallelLines:
+            housepoint = intersection(l1, l2)
+            if not housepoint.is_empty:
+                housepoints.append(housepoint)
+
 
     fig, ax = plt.subplots()
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
 
-    # change to be housepadding and rowpadding afterwards
-    # also the values here should start out as width and height of the unitpolygon plus a bit
-    xpadding, ypadding = 30, 50
-
-
-    longestline = PolygonFunctions.findLongestLine(rlppolygon)
-
-    (linePathX, mX, horizontalIsPerp), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
-
-    xlines = allPerpendicularLines(linePathX, mX, xpadding, isHorizontal=True)
-    ylines = allPerpendicularLines(linePathY, mY, ypadding, isHorizontal=False)            
-    
-    housepoints = []
-    for xl in xlines:
-        for yl in ylines:
-            housepoint = intersection(yl, xl)
-            if not housepoint.is_empty:
-                housepoints.append(housepoint)
-
-    plotHouses(housepoints, unitPolygons, longestline, ax)
-    plt.show()
+    plotHouses(housepoints, unitPolygons[0], ax)
+    # plt.show()
 
 
 mht = ManageHouseTypes()
@@ -205,9 +231,3 @@ unitPolygons = makeUnitPolygons(housetypes)
 basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
 mht.addProportions(basicproportions)
 plotProportions(housetypes, unitPolygons, basicproportions)
-
-
-
-# ISSUES:
-#       fix the +- when calculating padded points, rlp doesn't know which direction to go sometimes
-#       sometimes points aren't detected with rlp.contains(Point)
