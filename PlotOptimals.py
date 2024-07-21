@@ -170,7 +170,7 @@ def plotHouses(housepoints, unitPolygon, ax):
         if keepHouse:
             distincthouses.append(houses[i])
 
-    print(len(distincthouses))
+    print("number of houses on plot:", len(distincthouses))
     geopandas.GeoSeries([house.exterior for house in distincthouses]).plot(ax=ax, color="green")
     
 

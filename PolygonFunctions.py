@@ -134,11 +134,12 @@ def findLinePaths(polygon, showPaths=False):
             xmin = idx
         elif coords[idx][X] > coords[xmax][X]:
             xmax = idx
-        elif coords[idx][Y] < coords[ymin][Y]:
+
+        if coords[idx][Y] < coords[ymin][Y]:
             ymin = idx
         elif coords[idx][Y] > coords[ymax][Y]:
             ymax = idx
-    
+
     longestline = findLongestLine(polygon)    
     mparallel, c, isV = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
     mperp = -1/mparallel
@@ -150,7 +151,6 @@ def findLinePaths(polygon, showPaths=False):
         
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=False)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=True)
-        #     Returns [ (linePathX, gradient) , (linePathY, gradient) ]
         retval = (True, (xpath, mperp), (ypath, mparallel))
 
         
