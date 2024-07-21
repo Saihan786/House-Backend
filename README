@@ -1,24 +1,11 @@
-PROTOTYPE 1:
-* be able to add stuff to a pandas dataframe
-* that's literally it
+Welcome!
 
-* first be able to add literally anything to a graph (pandas dataframe)
-* then figure out how to make houses in terms of graph data
-* then put them on the axes by plotting
-* figure out how to plot with constraints: between the red line boundary lines, road/house constraints, entrance area
-* Self-drawing is just randomised plotting
-* at this point we can move on to Prototype 2, which is finding the optimal plot
+This software aims to assist in plotting houses in a user-provided region of space. This works with shapefiles and has its own method of generating them, but users are welcome to submit their own.
 
-* I can add "houses" and "roads" to a plot (they're just Polygons).
-* Constraints can be moved to Prototype 2 and can be implemented in terms of overlapping equations and regions.
-* Finish Prototype 1 with randomised plotting for self-drawing, then move on to Protoype 2.
-* Prototype 1 itself lacks generalisation to any given data.geojson file (so for any red line plot), so that must be implemented with randomised plotting by making random Polygons relative to given coordinates.
-* CRS stuff is confusing.
+The house plotter currently generates rows of houses parallel to the longest edge of the given region. I plan to put the software into a website for easier usability and then focus on optimising with iterative padding.
 
+The Prototype branches each serve their own purpose regarding this project, with more details in PLAN.txt. P1 is for creating user-defined houses, P2 is for generating house polygons and plotting them within the region, P3 is for optimisation of house placement (hopefully with regard to roads), and P4 is for providing a map (for user shapefile generation) and for building the website. Chronologically, the order was actually P4->P1->P2->P4(for the website)->P3.
 
-PROTOTYPE 4:
-* "RedLinePlot.py"
-* Call "makeEmptyMap()" to open a web page containing a world map (not yet real time)
-* Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
-* Call "openRLP()" with path to the .geojson file as a parameter to create a graph of the red line plot
-* All that's left for this prototype is to put it on a website, non-essential task
+Any references to roads are, for now, obsolete, as they are currently considered non-essential.
+
+Feel free to browse the python files!

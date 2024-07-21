@@ -5,6 +5,10 @@ from folium.plugins import Draw
 import webbrowser
 import os
 
+# returns path to datageojson file
+def getPath():
+    return "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/data.geojson"
+
 # returns red line plot as geopandas dataframe using given path
 def getRLP(path_to_rlp):
     return geopandas.read_file(path_to_rlp)
