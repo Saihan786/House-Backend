@@ -6,7 +6,6 @@ from HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
 import matplotlib.pyplot as plt
 from RedLinePlot import getRLP, getPath
 from shapely import Polygon, LineString, affinity, Point, intersection
-from AddDataToDF import coords
 import geopandas
 import numpy as np
 import PolygonFunctions
@@ -20,7 +19,6 @@ rlp = getRLP(getPath())
 rlp = rlp.to_crs(epsg=27700)
 rlp["name"] = ["rlp"]
 rlppolygon = rlp.geometry[0]
-oldrlpcoords = coords()
 
 def fillMHT(mht):
     mht.addNewHouseType("ht1", 100000, 0, 25, 30)
