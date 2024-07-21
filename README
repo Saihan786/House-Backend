@@ -1,39 +1,11 @@
-PROTOTYPE 1 (CURRENT):
-* TODO Allow user to create classes for different types of houses and roads, where each class has distinct properties:
-    * houses (rectangle) - name, profit, width, length, size
-    * roads              - name, cost, width
-* Problem with curved roads
+Welcome!
 
+This software aims to assist in plotting houses in a user-provided region of space. This works with shapefiles and has its own method of generating them, but users are welcome to submit their own.
 
-PROTOTYPE 2 (CURRENT):
-* DONE Find way to ensure houses and roads stay within rlp
-* TODO Generate houses and roads to be plotted within rlp:
-    * (already generalised to any data.geojson file)
-    * Use house types and road types from Prototype 1
-    * Optimise for total profit against total cost of generation for any given generation (should return multiple possible generations)
-* TODO Implement constraints (straight roads, houses facing roads, no overlapping of course (could use contains/within method here), and entry to rlp)
-* TODO Attempt to plot generation within rlp adhering to the constraints I've implemented by then, use a different generation if it's not possible
-    * Every attempt that the computer makes to plot a generation is randomised, or all attempts are exhaustive (might not be feasible, so might do random attempts for a given time period until it declares failure)
+The house plotter currently generates rows of houses parallel to the longest edge of the given region. I plan to put the software into a website for easier usability and then focus on optimising with iterative padding.
 
+The Prototype branches each serve their own purpose regarding this project, with more details in PLAN.txt. P1 is for creating user-defined houses, P2 is for generating house polygons and plotting them within the region, P3 is for optimisation of house placement (hopefully with regard to roads), and P4 is for providing a map (for user shapefile generation) and for building the website. Chronologically, the order was actually P4->P1->P2->P4(for the website)->P3.
 
+Any references to roads are, for now, obsolete, as they are currently considered non-essential.
 
-PROTOTYPE 2 GENERATE
-*plot houses and roads as well
-
-
-
-
-PROTOTYPE 3:
-* Take user input for house and road basic constraints (like size, cost, shape, etc.)
-* Optimise on constraints for optimal ratio of houses and roads
-* Try to automate plotting of this on the rlp
-
-
-
-
-PROTOTYPE 4 (NEARLY COMPLETE):
-* "RedLinePlot.py"
-* Call "makeEmptyMap()" to open a web page containing a world map (not yet real time)
-* Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
-* Call "openRLP()" with path to the .geojson file as a parameter to create a graph of the red line plot
-* All that's left for this prototype is to put it on a website, non-essential task
+Feel free to browse the python files!

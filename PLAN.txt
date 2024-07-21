@@ -1,0 +1,27 @@
+PROTOTYPE 1 (DONE):
+* DONE Allow user to create classes for different types of houses and roads, where each class has distinct properties:
+    * houses (rectangle) - name, profit, width, length, size
+    * roads              - name, cost, width
+* MAYBE_TODO Problem with curved roads
+
+
+PROTOTYPE 2 (DONE):
+* DONE Find way to ensure houses and roads stay within rlp
+* DONE Generate houses and roads to be plotted within rlp (unit polygons):
+    * (already generalised to any data.geojson file)
+    * Use house types and road types from Prototype 1
+    * Optimise for total profit against total cost of generation for any given generation
+* DONE Implement basic constraints (no overlapping)
+* MAYBE_TODO Implement nonbasic constraints (straight roads, houses facing roads, entry to rlp)
+
+
+PROTOTYPE 3 (FINAL):
+* TODO Optimise plotting with iterative padding decreasing process
+
+
+PROTOTYPE 4 (CURRENT, NEARLY DONE):
+* DONE "RedLinePlot.py"
+* DONE Call "makeEmptyMap()" to open a web page containing a world map (not yet real time)
+* DONE Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
+* DONE Call "openRLP()" with path to the .geojson file as a parameter to create a graph of the red line plot
+* CURRENT All that's left for this prototype is to put it on a website, non-essential task
