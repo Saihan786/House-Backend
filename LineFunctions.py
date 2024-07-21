@@ -61,7 +61,7 @@ def orderLine(line):
 
 
 def findAngle(line):
-    """Returns the angle between two lines, with error from use of pi.
+    """Returns the angle between one line and the horizontal, with error from use of pi.
     
     Due to pi error, equality comparisons of results of this function should use rounded values.
 
@@ -77,7 +77,7 @@ def findAngle(line):
 
 
 def isParallel(line1, line2):
-    """"Returns true if two lines have the same angle to 3 decimal places.
+    """"Returns true if two LineStrings have the same angle to 3 decimal places.
     
     This is to account for lines rotated using pi (like with radians).
 
@@ -110,11 +110,6 @@ def leqtoline(leq, polygon):
         shorterline = intersection(polygon, LineString( verylongline ))
 
         return shorterline
-
-
-def leqs(line):
-    """Returns the line equation for two points that are in a tuple."""
-    return lineEQ(line[linep1idx], line[linep2idx])
 
 
 def normalLineEQ(leq, point):
@@ -159,3 +154,22 @@ def linecval(m, p):
     
     x, y = p
     return y-(m*x)
+
+
+def distanceAsXY(leq, desired_distance):
+    """Finds the increase in x and y when moving a line by a given distance.
+    
+    Useful when using distances along a path, rather than distances from lleq and nleq.
+    
+    """
+
+    x = 0
+    y = lineyval(leq, x)
+
+    measureLine = LineString( [(x,y), (x+1, lineyval(leq, x+1))] )
+    real_distance = measureLine.length
+    factor = desired_distance / real_distance
+
+    
+
+    return (factor, lineyval(leq, factor))

@@ -4,7 +4,7 @@ from shapely import Polygon, LineString, affinity
 import geopandas
 import matplotlib.pyplot as plt
 import LineFunctions
-
+import numpy as np
 
 
 X,Y = 0,1
@@ -114,7 +114,7 @@ def find_path(coords, startpoint, endpoint, longestline, pathIsHorizontal, shoul
 def findLinePaths(polygon, showPaths=False):
     """Returns linePathX and linePathY which are each associated with a parallel/perpendicular line.
 
-    Returns [ (linePathX, gradient, isPerp) , (linePathY, gradient) ]
+    Returns [ horizontal_has_longest, (linePathX, gradient) , (linePathY, gradient) ]
 
     Line paths are used instead of the corner to plot houses. They are lists of lines.
         Instead of plotting from the corner, the xpath will be used to plot from xmin and
@@ -122,7 +122,7 @@ def findLinePaths(polygon, showPaths=False):
 
     The gradients are for the lines that will be plotted from the line paths.
 
-    The line path containing the longest line will use the perpendicularline.
+    The line path containing the longest line will use the perpendicular line.
     
     """
 
@@ -151,7 +151,7 @@ def findLinePaths(polygon, showPaths=False):
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=False)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=True)
         #     Returns [ (linePathX, gradient) , (linePathY, gradient) ]
-        retval = ((xpath, mperp, True), (ypath, mparallel))
+        retval = (True, (xpath, mperp), (ypath, mparallel))
 
         
     else:
@@ -161,7 +161,7 @@ def findLinePaths(polygon, showPaths=False):
 
         ypath = find_path(coords=coords, startpoint=ymax, endpoint=ymin, longestline=longestline, pathIsHorizontal=False, shouldContainLL=True)
         xpath = find_path(coords=coords, startpoint=xmin, endpoint=xmax, longestline=longestline, pathIsHorizontal=True, shouldContainLL=False)
-        retval = ((xpath, mparallel, False), (ypath, mperp))
+        retval = (False, (xpath, mparallel), (ypath, mperp))
 
 
     if showPaths:
@@ -194,10 +194,9 @@ def adjacentlines(polygon):
 
 
 def rotatePolygon(resultLine, polygon, showRotation=False):
-    """"Rotates the polygon until it is parallel to the line.
+    """"Rotates the polygon until it is parallel to the resultLine.
     
     Prints meta information about the rotation and displays it if boolean is set to True.
-        NOTE: In order to effectively display the rotation, the resultLine and polygon must be relatively close to each other.
     
     Returns the rotated polygon.
     
@@ -212,14 +211,14 @@ def rotatePolygon(resultLine, polygon, showRotation=False):
     
 
     if showRotation:
-        ax = geopandas.GeoSeries(resultLine).plot()
+        fig, ax = plt.subplots()
         geopandas.GeoSeries(oldPolygon).plot(ax=ax, color="red")
         geopandas.GeoSeries(polygon).plot(ax=ax, color="green")
         plt.show()
 
-        print("Original angle of polygonLine is", changeAngle)
-        print("The rotated angle of polygonLine should be", resultAngle)
-        print("The actual rotated angle is", LineFunctions.findAngle(polygonLine))
+        print("Original angle of polygonLine is", np.rad2deg(changeAngle))
+        print("The rotated angle of polygonLine should be", np.rad2deg(resultAngle))
+        print("The actual rotated angle is", np.rad2deg(LineFunctions.findAngle(polygonLine)))
         if LineFunctions.isParallel(polygonLine, resultLine):
             print("Successful rotation")
         else:
