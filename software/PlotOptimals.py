@@ -8,8 +8,8 @@ from RedLinePlot import getRLP, getPath
 from shapely import Polygon, LineString, affinity, Point, intersection
 import geopandas
 import numpy as np
-import PolygonFunctions
-import LineFunctions    
+import PolygonFunctions as PolygonFunctions
+import LineFunctions as LineFunctions    
 
 
 X, Y = 0, 1

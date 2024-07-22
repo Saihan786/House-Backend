@@ -6,7 +6,12 @@
                 "name": "Strict",
                 "detail": "Hide everything not immediately required",
                 "hidden": [
-                    "$Default"
+                    "$Default",
+                    "PLAN.txt",
+                    "README",
+                    "data.geojson",
+                    ".gitignore",
+                    "requirements.txt"
                 ]
             },
             {
@@ -30,7 +35,12 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "Graph.py": true,
-        "map.html": true
+        "map.html": true,
+        "PLAN.txt": true,
+        "README": true,
+        "data.geojson": true,
+        ".gitignore": true,
+        "requirements.txt": true
     },
-    "hidefiles.selectedProfile": "Default"
+    "hidefiles.selectedProfile": "Strict"
 }
