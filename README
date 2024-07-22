@@ -9,3 +9,10 @@ The Prototype branches each serve their own purpose regarding this project, with
 Any references to roads are, for now, obsolete, as they are currently considered non-essential.
 
 Feel free to browse the python files!
+
+
+
+To plot a region without using the website:
+*First, install the contents of the requirements.txt file.
+*Next, add in your own housetypes or use the default ones provided in "PlotOptimals.py".
+*Finally, run "PlotOptimals.py" to draw the regions!
