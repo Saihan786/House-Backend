@@ -1,6 +1,8 @@
 from django.shortcuts import render
+from django.template import loader
 
 from django.http import HttpResponse
 
 def index(request):
-    return HttpResponse("Hello world. You're at the index page.")
+    template = loader.get_template("plot/index.html")
+    return HttpResponse(template.render(context=None, request=request))
