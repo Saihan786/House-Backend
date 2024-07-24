@@ -1,3 +1,5 @@
+{%load static%}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -10,14 +12,7 @@
     <main>
         <h1>Welcome to My Website</h1>  
 
-        {% if map %}
-            <p>Got a map.</p>
-        {% else %}
-            <p>No map is available.</p>
-        {% endif %}
-
-
-        <object data="map.html"></object>
+        <object height="400px" width="600px" data="{% static 'plot/map.html' %}"></object>
 
     </main>
   </body>
