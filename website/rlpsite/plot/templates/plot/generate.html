@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+  </head>
+  <body>
+    
+    <main>
+        <h1>Generate the houses:</h1>  
+        <p1>Submit a red line plot as a data.geojson file with the button.</p1>
+
+        <br>
+        <br>
+        <br>
+        
+        <form action="" method="post">
+          {% csrf_token %}
+          {{ form }}
+          <input type="submit" value="Submit">
+        </form>
+        
+        <br>
+        <br>
+        <br>
+
+        <p1>Click on the 'generate' button to draw out a region with houses inside it.</p1>
+
+        <!-- add a button to call the PlotOptimals.py which takes the file from the model as the only param for now. -->
+
+    </main>
+    
+  </body>
+</html>

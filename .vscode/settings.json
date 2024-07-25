@@ -11,8 +11,17 @@
                     "README",
                     "data.geojson",
                     ".gitignore",
-                    "requirements.txt"
-                ]
+                    "requirements.txt",
+                    "website/rlpsite/requirements.txt",
+                    "website/rlpsite/db.sqlite3",
+                    "website/rlpsite/manage.py",
+                    "website/rlpsite/manage.py",
+                    "website/rlpsite/manage.py",
+                    "geojsons/",
+                    ".vscode/",
+                    "__pycache__/"
+                ],
+                "peek": []
             },
             {
                 "name": "Default",
@@ -40,7 +49,13 @@
         "README": true,
         "data.geojson": true,
         ".gitignore": true,
-        "requirements.txt": true
+        "requirements.txt": true,
+        "website/rlpsite/requirements.txt": true,
+        "website/rlpsite/db.sqlite3": true,
+        "website/rlpsite/manage.py": true,
+        "geojsons/": true,
+        ".vscode/": true,
+        "__pycache__/": true
     },
     "hidefiles.selectedProfile": "Strict"
 }
