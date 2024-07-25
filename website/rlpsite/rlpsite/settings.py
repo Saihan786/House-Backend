@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'plot.apps.PlotConfig',
+    'bootstrap5',
 ]
 
 MIDDLEWARE = [
