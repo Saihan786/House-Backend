@@ -208,8 +208,8 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
                 housepoints.append(housepoint)
 
     houses = plotHouses(housepoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon)
-    plt.show()
-    return houses
+    # plt.show()
+    return (fig, houses)
 
 
 
@@ -243,4 +243,4 @@ def startplot(rlp):
 
     basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
     mht.addProportions(basicproportions)
-    plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
+    return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)

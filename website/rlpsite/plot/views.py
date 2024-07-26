@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from .software.PlotOptimals import startplot, example
 from .forms import RegionForm
 
+from io import StringIO
 import geopandas
 
 
@@ -17,6 +18,7 @@ def index(request):
 
 
 def generate(request):
+    data = None
     
     if request.method == "POST":
         form = RegionForm(request.POST, request.FILES)
@@ -26,10 +28,16 @@ def generate(request):
             
             file = request.FILES["regionfile"].file
             rlp = geopandas.read_file(file)
-            startplot(rlp)
+            fig, plot = startplot(rlp)
+            
+            imgdata = StringIO()
+            fig.savefig(imgdata, format='svg')
+            imgdata.seek(0)
 
+            data = imgdata.getvalue()
+            
     else:
         form = RegionForm()
 
 
-    return render(request, "plot/generate.html", {"form": form})
+    return render(request, "plot/generate.html", {"form": form, "graph": data})

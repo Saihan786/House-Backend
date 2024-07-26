@@ -26,6 +26,12 @@
         <br>
         <br>
 
+        {% if graph %}
+          {{ graph|safe }}
+        {% else %}
+          <h3>Nothing yet submitted.</h3>
+        {% endif %}
+
 
     </main>
     
