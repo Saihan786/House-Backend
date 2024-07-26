@@ -10,25 +10,22 @@
     
     <main>
         <h1>Generate the houses:</h1>  
-        <p1>Submit a red line plot as a data.geojson file with the button.</p1>
+        <p1>Submit a data.geojson file below, then click on the 'generate' button.</p1>
 
         <br>
         <br>
         <br>
         
-        <form action="" method="post">
+        <form action="" method="post" enctype="multipart/form-data">
           {% csrf_token %}
           {{ form }}
-          <input type="submit" value="Submit">
+          <input type="submit" value="Generate">
         </form>
         
         <br>
         <br>
         <br>
 
-        <p1>Click on the 'generate' button to draw out a region with houses inside it.</p1>
-
-        <!-- add a button to call the PlotOptimals.py which takes the file from the model as the only param for now. -->
 
     </main>
     

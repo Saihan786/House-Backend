@@ -3,10 +3,10 @@ from django.template import loader
 
 from django.http import HttpResponse, HttpResponseRedirect
 
-from .software import PlotOptimals, HRGenerator, LineFunctions, PolygonFunctions, RedLinePlot
-# from .software import HRGenerator
-from .software.PlotOptimals import plotProportions
+from .software.PlotOptimals import startplot, example
 from .forms import RegionForm
+
+import geopandas
 
 
 
@@ -19,19 +19,15 @@ def index(request):
 def generate(request):
     
     if request.method == "POST":
-        form = RegionForm(request.POST)
-
-
-
-        print(request.POST)
-        
-        
-        
-        
-        
+        form = RegionForm(request.POST, request.FILES)
         
         if form.is_valid():
-            return HttpResponseRedirect("/thanks/")
+            print(":D")
+            
+            file = request.FILES["regionfile"].file
+            rlp = geopandas.read_file(file)
+            startplot(rlp)
+
     else:
         form = RegionForm()
 

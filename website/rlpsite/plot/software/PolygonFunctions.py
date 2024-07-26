@@ -3,7 +3,7 @@
 from shapely import Polygon, LineString, affinity
 import geopandas
 import matplotlib.pyplot as plt
-import LineFunctions as LineFunctions
+from ..software import LineFunctions
 import numpy as np
 
 

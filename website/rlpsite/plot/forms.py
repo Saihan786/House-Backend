@@ -1,4 +1,5 @@
 from django import forms
 
 class RegionForm(forms.Form):
-    region = forms.FileField()
+    title = forms.CharField(max_length=50)
+    regionfile = forms.FileField()

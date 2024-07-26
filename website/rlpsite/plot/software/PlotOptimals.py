@@ -2,23 +2,19 @@
 # might be easier to work with one housetype for now
 
 import geopandas.geoseries
-from HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
 import matplotlib.pyplot as plt
-from RedLinePlot import getRLP, getPath
 from shapely import Polygon, LineString, affinity, Point, intersection
 import geopandas
 import numpy as np
-import PolygonFunctions as PolygonFunctions
-import LineFunctions as LineFunctions    
+
+from .HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
+from .RedLinePlot import getRLP, getPath
+from ..software import PolygonFunctions, LineFunctions
 
 
 X, Y = 0, 1
 linep1idx, linep2idx = 0, 1
 
-rlp = getRLP(getPath())
-rlp = rlp.to_crs(epsg=27700)
-rlp["name"] = ["rlp"]
-rlppolygon = rlp.geometry[0]
 
 def fillMHT(mht):
     mht.addNewHouseType("ht1", 100000, 0, 25, 30)
@@ -94,7 +90,7 @@ def findPadding(unitPolygons, longestline):
     return (housepadding, rowpadding)
 
 
-def houselines(path, distance, pathIsHorizontal, ax=None, longestline=None):
+def houselines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestline=None):
     """Returns a list of all new lines, each from a point on the lines of the given path.
 
     The points are equidistant from each other at a given distance.
@@ -142,7 +138,7 @@ def houselines(path, distance, pathIsHorizontal, ax=None, longestline=None):
     return lines
 
 
-def plotHouses(housepoints, unitPolygon, ax):
+def plotHouses(housepoints, unitPolygon, ax, rlppolygon):
     """Plots houses using housepoints as locations for houses.
 
     need to change because only uses one unitpolygon for now
@@ -170,9 +166,10 @@ def plotHouses(housepoints, unitPolygon, ax):
 
     print("number of houses on plot:", len(distincthouses))
     geopandas.GeoSeries([house.exterior for house in distincthouses]).plot(ax=ax, color="green")
+    return distincthouses
     
 
-def plotProportions(housetypes, unitPolygons, proportions):
+def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
     """Plots all housetypes on the rlp.
     
     The number of houses of each ht depends on its proportion in proportions.
@@ -197,11 +194,11 @@ def plotProportions(housetypes, unitPolygons, proportions):
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
 
     if horizontal_has_longest:
-        perpLines = houselines(linePathX, housepadding, pathIsHorizontal=True, ax=ax, longestline=longestline)
-        parallelLines = houselines(linePathY, rowpadding, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perpLines = houselines(linePathX, housepadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
+        parallelLines = houselines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     else:
-        perpLines = houselines(linePathX, rowpadding, pathIsHorizontal=True, ax=ax)
-        parallelLines = houselines(linePathY, housepadding, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perpLines = houselines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax)
+        parallelLines = houselines(linePathY, housepadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     
     housepoints = []
     for l1 in perpLines:
@@ -210,16 +207,40 @@ def plotProportions(housetypes, unitPolygons, proportions):
             if not housepoint.is_empty:
                 housepoints.append(housepoint)
 
-    plotHouses(housepoints, unitPolygons[0], ax=ax)
+    houses = plotHouses(housepoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon)
     plt.show()
+    return houses
 
 
-mht = ManageHouseTypes()
-fillMHT(mht)
-housetypes = mht.getHouseTypes()
 
-unitPolygons = makeUnitPolygons(housetypes)
+def example():
+    rlp = getRLP(getPath())
+    rlp = rlp.to_crs(epsg=27700)
 
-basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
-mht.addProportions(basicproportions)
-plotProportions(housetypes, unitPolygons, basicproportions)
+    rlppolygon = rlp.geometry[0]
+    
+    mht = ManageHouseTypes()
+    fillMHT(mht)
+    housetypes = mht.getHouseTypes()
+
+    unitPolygons = makeUnitPolygons(housetypes)
+
+    basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
+    mht.addProportions(basicproportions)
+
+    return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
+
+
+def startplot(rlp):
+    rlp = rlp.to_crs(epsg=27700)
+    rlppolygon = rlp.geometry[0]
+    
+    mht = ManageHouseTypes()
+    fillMHT(mht)
+    housetypes = mht.getHouseTypes()
+
+    unitPolygons = makeUnitPolygons(housetypes)
+
+    basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
+    mht.addProportions(basicproportions)
+    plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
