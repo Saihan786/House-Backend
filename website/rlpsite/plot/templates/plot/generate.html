@@ -15,12 +15,15 @@
         <br>
         <br>
         <br>
+
+        {% if form %}
         
-        <form action="" method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          {{ form }}
-          <input type="submit" value="Generate">
-        </form>
+          <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit" value="Generate">
+          </form>
+        {% endif %}
         
         <br>
         <br>

@@ -1,12 +1,13 @@
 # don't consider budget or road costs
 # might be easier to work with one housetype for now
 
+import matplotlib
 import geopandas.geoseries
 import matplotlib.pyplot as plt
-from shapely import Polygon, LineString, affinity, Point, intersection
 import geopandas
 import numpy as np
 
+from shapely import Polygon, LineString, affinity, Point, intersection
 from .HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
 from .RedLinePlot import getRLP, getPath
 from ..software import PolygonFunctions, LineFunctions
@@ -208,7 +209,6 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
                 housepoints.append(housepoint)
 
     houses = plotHouses(housepoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon)
-    # plt.show()
     return (fig, houses)
 
 
@@ -231,9 +231,13 @@ def example():
     return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
 
 
-def startplot(rlp):
+def startplot(rlp, showCloseToOrigin=True):
+    matplotlib.use('agg')
+    
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
+    if showCloseToOrigin:
+        rlppolygon = PolygonFunctions.moveToOrigin(rlppolygon)
     
     mht = ManageHouseTypes()
     fillMHT(mht)
