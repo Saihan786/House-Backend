@@ -198,7 +198,7 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
         perpLines = houselines(linePathX, housepadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
         parallelLines = houselines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     else:
-        perpLines = houselines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax)
+        perpLines = houselines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
         parallelLines = houselines(linePathY, housepadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     
     housepoints = []
@@ -232,7 +232,7 @@ def example():
 
 
 def startplot(rlp, showCloseToOrigin=True):
-    matplotlib.use('agg')
+    # matplotlib.use('agg')
     
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
