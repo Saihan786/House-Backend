@@ -25,3 +25,6 @@ PROTOTYPE 4 (CURRENT, NEARLY DONE):
 * DONE Select the polygon option on the map to draw a polygon (red line plot), then export this as a .geojson file (should be more intuitive on a website)
 * DONE Call "openRLP()" with path to the .geojson file as a parameter to create a graph of the red line plot
 * CURRENT All that's left for this prototype is to put it on a website, non-essential task
+    *P4Func is to first implement functionality with dynamic interline distances and then use "basicproportions", and finally
+    to optimise
+    *P4Style is to style the website with bootstrap
