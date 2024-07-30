@@ -1,0 +1,36 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#box {
+  height: 100%;
+}
+
+#header {
+    height: 10%;
+    background-color: lightgrey;
+}
+#footer {
+    height: 10%;
+    background-color: lightgrey;
+}
+#content {
+    height: 80%;
+}
+
+.welcome-text {
+    height: 20%;
+    text-align: center;
+    padding-top: 1%;
+}
+
+#map{
+    height: 80%;
+    width: 100%;
+    padding-left: 10%;
+    padding-right: 10%;
+    padding-top: 4%;
+    padding-bottom: 4%;
+}
