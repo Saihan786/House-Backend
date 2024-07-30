@@ -29,21 +29,24 @@
           <h1>Generate the houses:</h1>  
           <p1>Submit a data.geojson file below, then click on the 'generate' button.</p1>
         </div>
+        <div id="rlp-form">
+          {% if form %}
+            <form action="" method="post" enctype="multipart/form-data" >
+              {% csrf_token %}
+              {{ form }}
+              <input type="submit" value="Generate">
+            </form>
+          {% endif %}
+        </div>
+        <div id="graphbox">
+          {% if graph %}
+            {{ graph|safe }}
+          {% endif %}
+        </div>
 
-        {% if form %}
-        
-          <form action="" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form }}
-            <input type="submit" value="Generate">
-          </form>
-        {% endif %}
-
-        {% if graph %}
-          {{ graph|safe }}
-        {% else %}
-          <h3>Nothing yet submitted.</h3>
-        {% endif %}
+      
+        <!-- <div class="welcome-text"> -->
+        <!-- </div> -->
 
         
           

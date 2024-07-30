@@ -49,11 +49,24 @@ body {
     padding-top: 1%;
 }
 
-#map{
+#map {
     height: 80%;
     width: 100%;
     padding-left: 10%;
     padding-right: 10%;
     padding-top: 4%;
     padding-bottom: 4%;
+}
+
+#rlp-form {
+    height: 20%;
+    text-align: center;
+    padding-top: 4%;
+    padding-bottom: 4%;
+    
+}
+#graphbox {
+    height: 60%;
+    text-align: center;
+    overflow: auto;
 }
