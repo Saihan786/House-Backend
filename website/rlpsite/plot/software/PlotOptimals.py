@@ -8,9 +8,18 @@ import geopandas
 import numpy as np
 
 from shapely import Polygon, LineString, affinity, Point, intersection
-from .HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
-from .RedLinePlot import getRLP, getPath
-from ..software import PolygonFunctions, LineFunctions
+
+
+try:
+    from .HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
+    from .RedLinePlot import getRLP, getPath
+    from ..software import PolygonFunctions, LineFunctions
+    matplotlib.use('agg')
+
+except ImportError:
+    from HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
+    from RedLinePlot import getRLP, getPath
+    import PolygonFunctions, LineFunctions
 
 
 X, Y = 0, 1
@@ -232,8 +241,6 @@ def example():
 
 
 def startplot(rlp, showCloseToOrigin=True):
-    # matplotlib.use('agg')
-    
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
     if showCloseToOrigin:

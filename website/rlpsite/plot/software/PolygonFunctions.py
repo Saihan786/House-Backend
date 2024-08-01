@@ -1,10 +1,18 @@
 """"Supporting functions when working with polygons."""
 
 from shapely import Polygon, LineString, affinity
+from matplotlib import use
 import geopandas
 import matplotlib.pyplot as plt
-from ..software import LineFunctions
 import numpy as np
+
+
+try:
+    from ..software import LineFunctions
+    use('agg')
+
+except ImportError:
+    import LineFunctions
 
 
 X,Y = 0,1
