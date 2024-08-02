@@ -1,5 +1,5 @@
 # don't consider budget or road costs
-# might be easier to work with one housetype for now
+# might be easier to work with one blocktype for now
 
 import matplotlib
 import geopandas.geoseries
@@ -11,13 +11,13 @@ from shapely import Polygon, LineString, affinity, Point, intersection
 
 
 try:
-    from .HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
+    from .HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, weightrandom
     from .RedLinePlot import getRLP, getPath
     from ..software import PolygonFunctions, LineFunctions
     matplotlib.use('agg')
 
 except ImportError:
-    from HRGenerator import ManageHouseTypes, generateBestTypes, generateBasicTypes
+    from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, weightrandom
     from RedLinePlot import getRLP, getPath
     import PolygonFunctions, LineFunctions
 
@@ -27,32 +27,32 @@ linep1idx, linep2idx = 0, 1
 
 
 def fillMHT(mht):
-    mht.addNewHouseType("ht1", 100000, 0, 25, 30)
-    mht.addNewHouseType("ht2", 150000, 0, 50, 50)
+    mht.addNewBlockType("ht1", 100000, 0, 25, 30)
+    mht.addNewBlockType("ht2", 150000, 0, 50, 50)
 
 
-def makeUnitPolygons(housetypes):
-    """Returns a list of unit polygons for each housetype
+def makeUnitPolygons(blocktypes):
+    """Returns a list of unit polygons for each blocktype
     
     Unit polygons can be adjusted around the rlp by adding to its x and y values.
 
     """
 
     unitPolygons = []
-    for ht in housetypes:
+    for bt in blocktypes:
         point1 = (0,0)
-        point2 = (0+ht.WIDTH,0)
-        point3 = (0,0+ht.LENGTH)
-        point4 = (0+ht.WIDTH,0+ht.LENGTH)
+        point2 = (0+bt.WIDTH,0)
+        point3 = (0,0+bt.LENGTH)
+        point4 = (0+bt.WIDTH,0+bt.LENGTH)
         unitPolygons.append(Polygon([point1, point2, point4, point3, point1]))
 
     return unitPolygons
 
 
 def findPadding(unitPolygons, longestline):
-    """Returns housepadding and rowpadding.
+    """Returns blockpadding and rowpadding.
     
-    Housepadding is the largest parallel length of all unit polygons with a bit added.
+    Blockpadding is the largest parallel length of all unit polygons with a bit added.
     Rowpadding is the largest perpendicular length of all unit polygons with a bit added.
 
     Padding is calculated iteratively.
@@ -92,15 +92,15 @@ def findPadding(unitPolygons, longestline):
         return padding
 
     leq = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
-    housepadding = calculateDistance(leq, showDistance=False)
+    blockpadding = calculateDistance(leq, showDistance=False)
 
     nleq = LineFunctions.normalLineEQ(leq, longestline[linep1idx])
     rowpadding = calculateDistance(nleq, showDistance=False)
 
-    return (housepadding, rowpadding)
+    return (blockpadding, rowpadding)
 
 
-def houselines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestline=None):
+def blocklines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestline=None):
     """Returns a list of all new lines, each from a point on the lines of the given path.
 
     The points are equidistant from each other at a given distance.
@@ -148,47 +148,79 @@ def houselines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestlin
     return lines
 
 
-def plotHouses(housepoints, unitPolygon, ax, rlppolygon):
-    """Plots houses using housepoints as locations for houses.
+def initPlot(blockpoints, unitPolygon, ax, rlppolygon, showInit=False):
+    """Returns a list of the blocks to be plotted.
 
-    need to change because only uses one unitpolygon for now
+    Creates an initial plot which only uses one blocktype.
     
     """
 
-    houses = []
+    blocks = []
 
-    for housepoint in housepoints:
+    for blockpoint in blockpoints:
         corners = []
         for corner in unitPolygon.exterior.coords[:-1]:
-            corners.append( (corner[X]+housepoint.coords[0][X] , corner[Y]+housepoint.coords[0][Y]) )
-        houses.append(Polygon(corners))
+            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+        blocks.append(Polygon(corners))
     
-    houses = [house for house in houses if rlppolygon.contains(house)]
+    blocks = [block for block in blocks if rlppolygon.contains(block)]
 
-    distincthouses = []
+    distinctblocks = []
 
     # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
-    for i in range(len(houses)):
-        keepHouse = True
-        for j in range(i+1, len(houses)):
-            if houses[i].intersects(houses[j]):
-                keepHouse = False
-        if keepHouse:
-            distincthouses.append(houses[i])
+    for i in range(len(blocks)):
+        keepBlock = True
+        for j in range(i+1, len(blocks)):
+            if blocks[i].intersects(blocks[j]):
+                keepBlock = False
+        if keepBlock:
+            distinctblocks.append(blocks[i])
 
-    print("number of houses on plot:", len(distincthouses))
-    geopandas.GeoSeries([house.exterior for house in distincthouses]).plot(ax=ax, color="green")
-    return distincthouses
+    # print("number of blocks on plot:", len(distinctblocks))
+    if showInit:
+        geopandas.GeoSeries([db.exterior for db in distinctblocks]).plot(ax=ax, color="green")
+    return distinctblocks
+
+
+def plotBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon):
+    """Plots different blocktypes using weightedrandomness and an initial plot
+    
+    """
+
+    blocks = []
+
+    for blockpoint in blockpoints:
+        corners = []
+        for corner in unitPolygon.exterior.coords[:-1]:
+            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+        blocks.append(Polygon(corners))
+    
+    blocks = [block for block in blocks if rlppolygon.contains(block)]
+
+    distinctblocks = []
+
+    # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
+    for i in range(len(blocks)):
+        keepBlock = True
+        for j in range(i+1, len(blocks)):
+            if blocks[i].intersects(blocks[j]):
+                keepBlock = False
+        if keepBlock:
+            distinctblocks.append(blocks[i])
+
+    # print("number of blocks on plot:", len(distinctblocks))
+    geopandas.GeoSeries([block.exterior for block in distinctblocks]).plot(ax=ax, color="green")
+    return distinctblocks
     
 
-def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
-    """Plots all housetypes on the rlp.
+def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
+    """Plots all blocktypes on the rlp.
     
-    The number of houses of each ht depends on its proportion in proportions.
+    The number of blocks of each bt depends on its proportion in proportions.
     
-    Unit polygons are copied and moved around the rlp to create new houses.
+    Unit polygons are copied and moved around the rlp to create new blocks.
 
-    Housepadding is for perp lines, while Rowpadding is for parallel lines.
+    Blockpadding is for perp lines, while Rowpadding is for parallel lines.
     
     """
 
@@ -199,31 +231,34 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
 
     horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
-    housepadding, rowpadding = findPadding(unitPolygons, longestline)
-    # housepadding, rowpadding = 30, 50
+    blockpadding, rowpadding = findPadding(unitPolygons, longestline)
+    # blockpadding, rowpadding = 30, 50
 
     fig, ax = plt.subplots()
 
     if horizontal_has_longest:
-        perpLines = houselines(linePathX, housepadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
-        parallelLines = houselines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perpLines = blocklines(linePathX, blockpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
+        parallelLines = blocklines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     else:
-        perpLines = houselines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
-        parallelLines = houselines(linePathY, housepadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perpLines = blocklines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
+        parallelLines = blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     
-    housepoints = []
+    blockpoints = []
     for l1 in perpLines:
         for l2 in parallelLines:
-            housepoint = intersection(l1, l2)
-            if not housepoint.is_empty:
-                housepoints.append(housepoint)
+            blockpoint = intersection(l1, l2)
+            if not blockpoint.is_empty:
+                blockpoints.append(blockpoint)
 
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     geopandas.GeoSeries(parallelLines).plot(ax=ax, color="green")
     geopandas.GeoSeries(perpLines).plot(ax=ax, color="green")
     
-    houses = plotHouses(housepoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon)
-    return (fig, houses)
+    blocks = initPlot(blockpoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon, showInit=True)
+
+    weightrandom(numspaces=len(blocks), blocktypes=blocktypes)
+    # plt.show()
+    return (fig, blocks)
 
 
 
@@ -233,17 +268,16 @@ def example():
 
     rlppolygon = rlp.geometry[0]
     
-    mht = ManageHouseTypes()
+    mht = ManageBlockTypes()
     fillMHT(mht)
-    housetypes = mht.getHouseTypes()
+    blocktypes = mht.getBlockTypes()
 
-    unitPolygons = makeUnitPolygons(housetypes)
+    unitPolygons = makeUnitPolygons(blocktypes)
 
-    basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
-    bestproportions = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=True)
+    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
     mht.addProportions(bestproportions)
 
-    return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
+    return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
 
 
 def startplot(rlp, showCloseToOrigin=True):
@@ -252,25 +286,15 @@ def startplot(rlp, showCloseToOrigin=True):
     if showCloseToOrigin:
         rlppolygon = PolygonFunctions.moveToOrigin(rlppolygon)
     
-    mht = ManageHouseTypes()
+    mht = ManageBlockTypes()
     fillMHT(mht)
-    housetypes = mht.getHouseTypes()
+    blocktypes = mht.getBlockTypes()
 
-    unitPolygons = makeUnitPolygons(housetypes)
+    unitPolygons = makeUnitPolygons(blocktypes)
 
-    basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
+    basicproportions = generateBasicTypes(mht.getBlockTypes(), maxsize=rlppolygon.area, showResults=False)
     mht.addProportions(basicproportions)
-    return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
+    return plotProportions(blocktypes, unitPolygons, basicproportions, rlppolygon)
 
 example()
-plt.show()
-
-
-
-
-# Plan:
-#   complete initial plotting
-#   check initial plotting matches basicproportions
-#   if not then find out how many more houses from each proportion to match basicproportions
-#   
-#   
+# plt.show()
