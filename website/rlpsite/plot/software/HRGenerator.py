@@ -155,7 +155,7 @@ def weightrandom(numspaces, blocktypes):
     """Returns a list of randomly determined blocktypes for initial plotting."""
     
     # for now, just to see this artificial example
-    blocktypes[1].PROPORTION = 14
+    blocktypes[1].PROPORTION = 35
     
     total_proportion = sum( [bt.PROPORTION for bt in blocktypes] )
 
@@ -165,6 +165,28 @@ def weightrandom(numspaces, blocktypes):
     
     rng = random.default_rng()
     plot_blocktypes = rng.choice( [bt.NAME for bt in blocktypes] , numspaces, p=plot_chances)
+
+    return plot_blocktypes
+
+
+def indexweightrandom(numspaces, blocktypes):
+    """Returns a list of randomly determined blocktypes for initial plotting.
+    
+    The blocktypes are represented by their index in the blocktypes array.
+    
+    """
+    
+    # for now, just to see this artificial example
+    blocktypes[1].PROPORTION = 35
+    
+    total_proportion = sum( [bt.PROPORTION for bt in blocktypes] )
+
+    plot_chances = []
+    for bt in blocktypes:
+        plot_chances.append( bt.PROPORTION / total_proportion )
+    
+    rng = random.default_rng()
+    plot_blocktypes = rng.choice( len(blocktypes) , numspaces, p=plot_chances)
 
     return plot_blocktypes
 
