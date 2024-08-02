@@ -148,22 +148,44 @@ def blocklines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestlin
     return lines
 
 
-def initPlot(blockpoints, unitPolygon, ax, rlppolygon, showInit=False):
-    """Returns a list of the blocks to be plotted.
+def move_block_to_point(up, blockpoint, rlppolygon):
+    """Returns a block that has been moved to the desired point.
+    
+    Returns None if the block does not fit inside the polygon.
 
-    Creates an initial plot which only uses one blocktype.
+    Requires that the up has center origin to begin with.
+    
+    """
+    
+    corners = []
+    for corner in up.exterior.coords[:-1]:
+        corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+    block = Polygon(corners)
+
+    if rlppolygon.contains(block):
+        return block
+    else:
+        return None
+
+
+def initPlot(blockpoints, unitPolygons, ax, rlppolygon, showInit=False):
+    """Returns a list of the each smallest block to be plotted.
+
+    Creates an initial plot which only uses the smallest blocktype.
     
     """
 
     blocks = []
 
+    smallest_up = unitPolygons[0]
+    for up in unitPolygons:
+        if up.area < smallest_up.area:
+            smallest_up = up
+
     for blockpoint in blockpoints:
-        corners = []
-        for corner in unitPolygon.exterior.coords[:-1]:
-            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
-        blocks.append(Polygon(corners))
-    
-    blocks = [block for block in blocks if rlppolygon.contains(block)]
+        block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
+        if block is not None:
+            blocks.append(block)
 
     distinctblocks = []
 
@@ -182,35 +204,38 @@ def initPlot(blockpoints, unitPolygon, ax, rlppolygon, showInit=False):
     return distinctblocks
 
 
-def plotBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon):
-    """Plots different blocktypes using weightedrandomness and an initial plot
+def replaceBlocks(blocks, unitPolygons, plot_blocktypes, ax, rlppolygon):
+    """Plots different blocktypes using weightedrandomness and an initial plot."""
+
+    print(plot_blocktypes)
+    for block in blocks:
+        # print(block)
+        pass
+
+    # blocks = []
+
+    # for blockpoint in blocks:
+    #     corners = []
+    #     for corner in unitPolygon.exterior.coords[:-1]:
+    #         corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+    #     blocks.append(Polygon(corners))
     
-    """
+    # blocks = [block for block in blocks if rlppolygon.contains(block)]
 
-    blocks = []
+    # distinctblocks = []
 
-    for blockpoint in blockpoints:
-        corners = []
-        for corner in unitPolygon.exterior.coords[:-1]:
-            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
-        blocks.append(Polygon(corners))
-    
-    blocks = [block for block in blocks if rlppolygon.contains(block)]
+    # # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
+    # for i in range(len(blocks)):
+    #     keepBlock = True
+    #     for j in range(i+1, len(blocks)):
+    #         if blocks[i].intersects(blocks[j]):
+    #             keepBlock = False
+    #     if keepBlock:
+    #         distinctblocks.append(blocks[i])
 
-    distinctblocks = []
-
-    # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
-    for i in range(len(blocks)):
-        keepBlock = True
-        for j in range(i+1, len(blocks)):
-            if blocks[i].intersects(blocks[j]):
-                keepBlock = False
-        if keepBlock:
-            distinctblocks.append(blocks[i])
-
-    # print("number of blocks on plot:", len(distinctblocks))
-    geopandas.GeoSeries([block.exterior for block in distinctblocks]).plot(ax=ax, color="green")
-    return distinctblocks
+    # # print("number of blocks on plot:", len(distinctblocks))
+    # geopandas.GeoSeries([block.exterior for block in distinctblocks]).plot(ax=ax, color="green")
+    # return distinctblocks
     
 
 def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
@@ -254,10 +279,12 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     geopandas.GeoSeries(parallelLines).plot(ax=ax, color="green")
     geopandas.GeoSeries(perpLines).plot(ax=ax, color="green")
     
-    blocks = initPlot(blockpoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon, showInit=True)
+    blocks = initPlot(blockpoints, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=True)
 
-    weightrandom(numspaces=len(blocks), blocktypes=blocktypes)
-    # plt.show()
+    plot_blocktypes = weightrandom(numspaces=len(blocks), blocktypes=blocktypes)
+    replaceBlocks(blocks, unitPolygons, plot_blocktypes, ax, rlppolygon)
+
+    plt.show()
     return (fig, blocks)
 
 
