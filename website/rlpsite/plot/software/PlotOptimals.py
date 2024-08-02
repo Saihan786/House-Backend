@@ -168,7 +168,7 @@ def move_block_to_point(up, blockpoint, rlppolygon):
         return None
     
 
-def filter_blocks(blocks):
+def filter_blocks(blocks, smallBlocks=None, replaceSmall=False):
     """Filters the blocks by removing the ones that overlap with another block.
     
     Returns filtered blocks.
@@ -187,6 +187,8 @@ def filter_blocks(blocks):
                 keepBlock = False
         if keepBlock:
             distinctblocks.append(blocks[i])
+        elif replaceSmall:
+            distinctblocks.append(smallBlocks[i])
 
     return distinctblocks
 
@@ -222,8 +224,12 @@ def initPlot(blockpoints, unitPolygons, ax, rlppolygon, showInit=False):
     return distinctblocks, filtered_blockpoints
 
 
-def replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon):
-    """Plots different blocktypes using weightedrandomness and an initial plot."""
+def replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, smallBlocks, ax, rlppolygon):
+    """Plots different blocktypes using weightedrandomness and an initial plot.
+    
+    If a block can't be replaced, it stays the same.
+    
+    """
 
     blocks = []
 
@@ -236,7 +242,7 @@ def replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon):
         if block is not None:
             blocks.append(block)
     
-    distinctblocks = filter_blocks(blocks)
+    distinctblocks = filter_blocks(blocks, smallBlocks, replaceSmall=False)
 
     # print("number of blocks on plot:", len(distinctblocks))
     geopandas.GeoSeries([block.exterior for block in distinctblocks]).plot(ax=ax, color="green")
@@ -283,14 +289,14 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     # geopandas.GeoSeries(parallelLines).plot(ax=ax, color="green")
     # geopandas.GeoSeries(perpLines).plot(ax=ax, color="green")
     
-    blocks, blockpoints = initPlot(blockpoints, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
+    smallBlocks, blockpoints = initPlot(blockpoints, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
 
-    plot_blocktypes = indexweightrandom(numspaces=len(blocks), blocktypes=blocktypes)
-    replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon)
+    plot_blocktypes = indexweightrandom(numspaces=len(smallBlocks), blocktypes=blocktypes)
+    randomBlocks = replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, smallBlocks, ax, rlppolygon)
 
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     plt.show()
-    return (fig, blocks)
+    return (fig, randomBlocks)
 
 
 
