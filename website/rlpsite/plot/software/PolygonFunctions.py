@@ -1,6 +1,6 @@
 """"Supporting functions when working with polygons."""
 
-from shapely import Polygon, LineString, affinity
+from shapely import Polygon, LineString, affinity, centroid, Point
 from matplotlib import use
 import geopandas
 import matplotlib.pyplot as plt
@@ -244,7 +244,6 @@ def moveToOrigin(polygon, showTranslation=False):
     
     """
 
-    X,Y = 0,1
     leftmost = polygon.exterior.coords[0][X]
     bottom = polygon.exterior.coords[0][Y]
     for coord in polygon.exterior.coords[1:-1]:
@@ -256,6 +255,38 @@ def moveToOrigin(polygon, showTranslation=False):
     if showTranslation:
         ax = geopandas.GeoSeries(Polygon(shiftcoords).exterior).plot(color="green")
         geopandas.GeoSeries(polygon.exterior).plot(ax=ax, color="red")
+        plt.show()
+    
+    return Polygon(shiftcoords)
+
+
+def centerAtOrigin(polygon, showTranslation=False):
+    """Moves the polygon until the origin is the mean of all of its points.
+
+    Exists the option to show the translation, which is only effective if the distance translated is not too large.
+    
+    Returns the moved polygon.
+    
+    """
+
+    leftmost = polygon.exterior.coords[0][X]
+    bottom = polygon.exterior.coords[0][Y]
+    for coord in polygon.exterior.coords[1:-1]:
+        if coord[X] < leftmost : leftmost=coord[X]
+        if coord[Y] < bottom : bottom=coord[Y]
+    
+    center = polygon.centroid
+    shiftcoords = [(coord[X]-center.x, coord[Y]-center.y) for coord in polygon.exterior.coords[:-1]]
+
+    if showTranslation:
+        fig, ax = plt.subplots()
+        pold = polygon
+        pnew = Polygon(shiftcoords)
+        center = centroid( pnew )
+        
+        geopandas.GeoSeries( [pold.exterior, Point( pold.centroid )] ).plot(ax=ax, color="red")
+        geopandas.GeoSeries([pnew.exterior, Point(pnew.centroid)]).plot(ax=ax, color="green")
+        geopandas.GeoSeries( Point( (0,0) ) ).plot(ax=ax, color="blue")
         plt.show()
     
     return Polygon(shiftcoords)

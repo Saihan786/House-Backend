@@ -166,7 +166,9 @@ def plotHouses(housepoints, unitPolygon, ax, rlppolygon):
     houses = [house for house in houses if rlppolygon.contains(house)]
 
     distincthouses = []
-    for i in range(-1+len(houses)):
+
+    # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
+    for i in range(len(houses)):
         keepHouse = True
         for j in range(i+1, len(houses)):
             if houses[i].intersects(houses[j]):
@@ -193,15 +195,14 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
     unitPolygons = [PolygonFunctions.rotatePolygon(LineString(longestline), uP, showRotation=False) for uP in unitPolygons]
-    unitPolygons = [PolygonFunctions.moveToOrigin(uP, showTranslation=False) for uP in unitPolygons]
+    unitPolygons = [PolygonFunctions.centerAtOrigin(uP, showTranslation=False) for uP in unitPolygons]
 
     horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
     housepadding, rowpadding = findPadding(unitPolygons, longestline)
-    housepadding, rowpadding = 30, 50
+    # housepadding, rowpadding = 30, 50
 
     fig, ax = plt.subplots()
-    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
 
     if horizontal_has_longest:
         perpLines = houselines(linePathX, housepadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
@@ -217,6 +218,10 @@ def plotProportions(housetypes, unitPolygons, proportions, rlppolygon):
             if not housepoint.is_empty:
                 housepoints.append(housepoint)
 
+    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+    geopandas.GeoSeries(parallelLines).plot(ax=ax, color="green")
+    geopandas.GeoSeries(perpLines).plot(ax=ax, color="green")
+    
     houses = plotHouses(housepoints, unitPolygons[0], ax=ax, rlppolygon=rlppolygon)
     return (fig, houses)
 
@@ -235,7 +240,8 @@ def example():
     unitPolygons = makeUnitPolygons(housetypes)
 
     basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
-    mht.addProportions(basicproportions)
+    bestproportions = generateBestTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=True)
+    mht.addProportions(bestproportions)
 
     return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
 
@@ -255,3 +261,16 @@ def startplot(rlp, showCloseToOrigin=True):
     basicproportions = generateBasicTypes(mht.getHouseTypes(), maxsize=rlppolygon.area, showResults=False)
     mht.addProportions(basicproportions)
     return plotProportions(housetypes, unitPolygons, basicproportions, rlppolygon)
+
+example()
+plt.show()
+
+
+
+
+# Plan:
+#   complete initial plotting
+#   check initial plotting matches basicproportions
+#   if not then find out how many more houses from each proportion to match basicproportions
+#   
+#   
