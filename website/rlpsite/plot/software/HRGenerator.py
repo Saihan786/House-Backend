@@ -169,15 +169,15 @@ def weightrandom(numspaces, blocktypes):
     return plot_blocktypes
 
 
-def indexweightrandom(numspaces, blocktypes):
+def indexweightrandom(numspaces, blocktypes, accuracy=0.005):
     """Returns a list of randomly determined blocktypes for initial plotting.
     
     The blocktypes are represented by their index in the blocktypes array.
+
+    The list will be accurate to within the given accuracy,
+    but more accurate values will take a longer time and more processing.
     
     """
-    
-    # for now, just to see this artificial example
-    blocktypes[1].PROPORTION = 35
     
     total_proportion = sum( [bt.PROPORTION for bt in blocktypes] )
 
@@ -185,8 +185,31 @@ def indexweightrandom(numspaces, blocktypes):
     for bt in blocktypes:
         plot_chances.append( bt.PROPORTION / total_proportion )
     
+
+    # for now, just to see this artificial example
+    plot_chances = [0.9, 0.1]
+
+
     rng = random.default_rng()
-    plot_blocktypes = rng.choice( len(blocktypes) , numspaces, p=plot_chances)
+    accuracy_reached = False
+    counter = 0
+    while not accuracy_reached:
+        counter+=1
+        plot_blocktypes = rng.choice( len(blocktypes) , numspaces, p=plot_chances)
+
+
+        accuracy_reached = True
+        for i in range(len(blocktypes)):
+            actual_plot_chance = len( [v for v in plot_blocktypes if v==i] ) / len(plot_blocktypes)
+            if abs(plot_chances[i] - actual_plot_chance) >= accuracy:
+                accuracy_reached = False
+                break
+    
+    print("counter =", counter)
+    print( len( [v for v in plot_blocktypes if v==0] ) )
+    print( len( [v for v in plot_blocktypes if v==0] ) / len(plot_blocktypes) )
+    print( len( [v for v in plot_blocktypes if v==1] ) )
+    print( len( [v for v in plot_blocktypes if v==1] ) / len(plot_blocktypes) )
 
     return plot_blocktypes
 
