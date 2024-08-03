@@ -239,7 +239,7 @@ def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
     return distinctblocks, filtered_blockpoints_as_rows
 
 
-def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon):
+def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon, showBlocks=False):
     """Plots different blocktypes using weightedrandomness and an initial plot.
     
     If a block can't be replaced, it stays the same.
@@ -269,18 +269,34 @@ def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppol
     
     distinctblocks = filter_blocks(blocks_as_rows, smallest_up, replaceSmall=True)
 
-    geopandas.GeoSeries([block.exterior for row in distinctblocks for block in row]).plot(ax=ax, color="green")
+    if showBlocks:
+        geopandas.GeoSeries([block.exterior for row in distinctblocks for block in row]).plot(ax=ax, color="green")
     return distinctblocks
 
 
-def move_blocks_left(blocks, rlppolygon):
-    """Moves all blocks left to minimise padding and open up space for more blocks."""
+def move_blocks_left(blocks_as_rows, rlppolygon, ax=None):
+    """Changes the input parameter to move all blocks left until they touch to open up space for more blocks.
     
-    for i in range(len(blocks)):
-        prev = blocks[i-1]
-        cur = blocks[i]
+    TODO: Move first point of each row to be closer to the edge of the polygon.
+    
+    """
 
-        # print(dist(prev, cur))
+    for row in blocks_as_rows:
+        # range(1, len(row)), but later will have separate way to make first block to touch the polygon inshaallah
+        for i in range(1, len(row)):
+            prev = row[i-1]
+            cur = row[i]
+
+            init_point = cur.centroid
+            prev_point = prev.centroid
+            leq = LineFunctions.lineEQ((init_point.x, init_point.y), (prev_point.x, prev_point.y))
+
+            final_point = LineFunctions.point_from_distance(leq, (init_point.x, init_point.y), dist(prev, cur))
+
+            up = PolygonFunctions.centerAtOrigin(cur)
+            block = move_block_to_point(up, Point(final_point))
+
+            row[i] = block
     
 
 def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
@@ -328,8 +344,10 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 
     plot_blocktypes_as_rows = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
     
-    randomBlocks = replaceBlocks(blockpoints_as_rows, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon)
-    # move_blocks_left(randomBlocks, rlppolygon)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+
+    geopandas.GeoSeries([block.exterior for row in randomBlocks_as_rows for block in row]).plot(ax=ax, color="green")
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
 
     plt.show()

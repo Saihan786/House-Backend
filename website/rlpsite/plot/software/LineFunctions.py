@@ -156,20 +156,19 @@ def linecval(m, p):
     return y-(m*x)
 
 
-def distanceAsXY(leq, desired_distance):
-    """Finds the increase in x and y when moving a line by a given distance.
-    
-    Useful when using distances along a path, rather than distances from lleq and nleq.
+def point_from_distance(leq, init_point, desired_distance, left_not_right=True):
+    """Finds a new point using a line equation, desired distance, and initial point.
+
+    Returns (x,y).
     
     """
 
-    x = 0
+    x = init_point[X]
     y = lineyval(leq, x)
 
-    measureLine = LineString( [(x,y), (x+1, lineyval(leq, x+1))] )
-    real_distance = measureLine.length
-    factor = desired_distance / real_distance
+    measureLine = LineString( [(x,y), (x-1, lineyval(leq, x-1))] )
+    factor = desired_distance / measureLine.length
 
+    new_point = (x-factor, lineyval(leq, x-factor))
     
-
-    return (factor, lineyval(leq, factor))
+    return new_point
