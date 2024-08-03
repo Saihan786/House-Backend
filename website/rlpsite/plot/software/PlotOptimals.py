@@ -8,6 +8,7 @@ import geopandas
 import numpy as np
 
 from shapely import Polygon, LineString, affinity, Point, intersection
+from shapely import distance as dist
 
 
 try:
@@ -84,7 +85,7 @@ def findPadding(unitPolygons, longestline):
 
             allups.append(up1)
             allups.append(up2)
-        
+
         if showDistance:
             geopandas.GeoSeries([up.exterior for up in allups]).plot()
             plt.show()
@@ -168,90 +169,118 @@ def move_block_to_point(up, blockpoint, rlppolygon=None):
         return None
     
 
-def filter_blocks(blocks, smallest_up=None, replaceSmall=False):
+def filter_blocks(blocks_as_rows, smallest_up=None, replaceSmall=False):
     """Filters the blocks by removing the ones that overlap with another block.
     
-    Returns filtered blocks.
-    
-    *****NEEDS TO BE OPTIMISED FOR PERFORMANCE, SEE BELOW*****
+    Returns filtered blocks as rows.
+
+    Returns filtered blockpoints_as_rows (under same condition as filtered blocks).
     
     """
     
     distinctblocks = []
 
-    # THIS SHOULD BE OPTIMISED (IT'S O(N^2) RIGHT NOW, FAR TOO SLOW AND UNSCALEABLE)
-    for i in range(len(blocks)):
-        keepBlock = True
-        for j in range(0, len(blocks)):
-            if i==j:
-                continue
-            if blocks[i].intersects(blocks[j]):
-                keepBlock = False
-        if keepBlock:
-            distinctblocks.append(blocks[i])
-        elif replaceSmall:
-            distinctblocks.append( move_block_to_point(smallest_up, blocks[i].centroid) )
+    for x in range(-1+len(blocks_as_rows)):
+        row = []
+        for y in range(len( blocks_as_rows[x] )):
+            
+            block = blocks_as_rows[x][y]
+            keepBlock = True
+            
+            next = blocks_as_rows[x][y-1]
+            if block.intersects(next):
+                keepBlock=False
+
+            for nextrowblock in blocks_as_rows[x+1]:
+                if block.intersects(nextrowblock):
+                    keepBlock=False
+
+            if keepBlock:
+                row.append(block)
+            elif replaceSmall:
+                row.append( move_block_to_point(smallest_up, block.centroid) )
+
+        distinctblocks.append(row)
+    distinctblocks.append( blocks_as_rows[ -1+len(blocks_as_rows) ] )
 
     return distinctblocks
 
 
-def initPlot(blockpoints, unitPolygons, ax, rlppolygon, showInit=False):
-    """Returns blockpoints that will be included in next iteration.
+def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
+    """Returns blockpoints (as rows) that will be included in next iteration.
 
     Creates an initial plot which only uses the smallest blocktype.
     
     """
-
-    blocks = []
 
     smallest_up = unitPolygons[0]
     for up in unitPolygons:
         if up.area < smallest_up.area:
             smallest_up = up
 
-    filtered_blockpoints = []
-    for blockpoint in blockpoints:
-        block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
-        if block is not None:
-            blocks.append(block)
-            filtered_blockpoints.append(blockpoint)
+
+    blocks = []
+    filtered_blockpoints_as_rows = []
+    for row in rows_of_bps:
+        newbprow = []
+        newblockrow = []
+        for blockpoint in row:
+            block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
+            if block is not None:
+                newblockrow.append(block)
+                newbprow.append(blockpoint)
+        blocks.append(newblockrow)
+        filtered_blockpoints_as_rows.append(newbprow)
 
     distinctblocks = filter_blocks(blocks)
 
     if showInit:
-        geopandas.GeoSeries([db.exterior for db in distinctblocks]).plot(ax=ax, color="green")
-        print("number of blocks on plot:", len(distinctblocks))
-    return distinctblocks, filtered_blockpoints
+        geopandas.GeoSeries([db.exterior for row in distinctblocks for db in row]).plot(ax=ax, color="green")
+    return distinctblocks, filtered_blockpoints_as_rows
 
 
-def replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon):
+def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon):
     """Plots different blocktypes using weightedrandomness and an initial plot.
     
     If a block can't be replaced, it stays the same.
     
     """
 
-    blocks = []
+    blocks_as_rows = []
 
-    for i in range(len(blockpoints)):
-        bp = blockpoints[i]
-        bt = plot_blocktypes[i]
-        up = unitPolygons[bt]
+    for x in range(len(rows_of_bps)):
 
-        block = move_block_to_point(up, bp, rlppolygon)
-        if block is not None:
-            blocks.append(block)
+        row = []
+        for y in range(len( rows_of_bps[x] )):
+            bp = rows_of_bps[x][y]
+            bt = plot_blocktypes_as_rows[x][y]
+            up = unitPolygons[bt]
+
+            block = move_block_to_point(up, bp, rlppolygon)
+            if block is not None:
+                row.append(block)
+
+        blocks_as_rows.append(row)
 
     smallest_up = unitPolygons[0]
     for up in unitPolygons:
         if up.area < smallest_up.area:
             smallest_up = up
     
-    distinctblocks = filter_blocks(blocks, smallest_up, replaceSmall=True)
+    distinctblocks = filter_blocks(blocks_as_rows, smallest_up, replaceSmall=True)
 
-    # print("number of blocks on plot:", len(distinctblocks))
-    geopandas.GeoSeries([block.exterior for block in distinctblocks]).plot(ax=ax, color="green")
+    geopandas.GeoSeries([block.exterior for row in distinctblocks for block in row]).plot(ax=ax, color="green")
     return distinctblocks
+
+
+def move_blocks_left(blocks, rlppolygon):
+    """Moves all blocks left to minimise padding and open up space for more blocks."""
+    
+    for i in range(len(blocks)):
+        prev = blocks[i-1]
+        cur = blocks[i]
+
+        # print(dist(prev, cur))
     
 
 def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
@@ -273,7 +302,6 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
     blockpadding, rowpadding = findPadding(unitPolygons, longestline)
-    # blockpadding, rowpadding = 30, 50
 
     fig, ax = plt.subplots()
 
@@ -285,21 +313,25 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         parallelLines = blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     
     blockpoints = []
-    for l1 in perpLines:
-        for l2 in parallelLines:
+    rows_of_bps = []
+    for l1 in parallelLines:
+        row = []
+        for l2 in perpLines:
             blockpoint = intersection(l1, l2)
             if not blockpoint.is_empty:
                 blockpoints.append(blockpoint)
-
-    # geopandas.GeoSeries(parallelLines).plot(ax=ax, color="green")
-    # geopandas.GeoSeries(perpLines).plot(ax=ax, color="green")
+                row.append(blockpoint)
+        rows_of_bps.append(row)
     
-    smallBlocks, blockpoints = initPlot(blockpoints, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
+    smallBlocks_as_rows, blockpoints_as_rows = initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
+    num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
 
-    plot_blocktypes = indexweightrandom(numspaces=len(smallBlocks), blocktypes=blocktypes)
-    randomBlocks = replaceBlocks(blockpoints, unitPolygons, plot_blocktypes, ax, rlppolygon)
-
+    plot_blocktypes_as_rows = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    
+    randomBlocks = replaceBlocks(blockpoints_as_rows, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon)
+    # move_blocks_left(randomBlocks, rlppolygon)
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+
     plt.show()
     # return (fig, randomBlocks)
 
@@ -317,7 +349,7 @@ def example():
 
     unitPolygons = makeUnitPolygons(blocktypes)
 
-    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
+    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
     mht.addProportions(bestproportions)
 
     return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)

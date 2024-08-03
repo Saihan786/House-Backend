@@ -169,15 +169,18 @@ def weightrandom(numspaces, blocktypes):
     return plot_blocktypes
 
 
-def indexweightrandom(numspaces, blocktypes, accuracy=0.005):
+def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005):
     """Returns a list of randomly determined blocktypes for initial plotting.
     
     The blocktypes are represented by their index in the blocktypes array.
 
     The list will be accurate to within the given accuracy,
     but more accurate values will take a longer time and more processing.
+
+    The list will be in rows matching the rows of the plot.
     
     """
+
     
     total_proportion = sum( [bt.PROPORTION for bt in blocktypes] )
 
@@ -187,7 +190,7 @@ def indexweightrandom(numspaces, blocktypes, accuracy=0.005):
     
 
     # for now, just to see this artificial example
-    plot_chances = [0.9, 0.1]
+    plot_chances = [0.5, 0.5]
 
 
     rng = random.default_rng()
@@ -196,7 +199,6 @@ def indexweightrandom(numspaces, blocktypes, accuracy=0.005):
     while not accuracy_reached:
         counter+=1
         plot_blocktypes = rng.choice( len(blocktypes) , numspaces, p=plot_chances)
-
 
         accuracy_reached = True
         for i in range(len(blocktypes)):
@@ -210,8 +212,24 @@ def indexweightrandom(numspaces, blocktypes, accuracy=0.005):
     print( len( [v for v in plot_blocktypes if v==0] ) / len(plot_blocktypes) )
     print( len( [v for v in plot_blocktypes if v==1] ) )
     print( len( [v for v in plot_blocktypes if v==1] ) / len(plot_blocktypes) )
+    print()
 
-    return plot_blocktypes
+    plot_blocktypes_as_rows = []
+    blocki = 0
+    for row in rows:
+        pb_row = []
+        for i in range(len(row)):
+            # pb_row.append(plot_blocktypes[blocki])
+            pb_row.append(plot_blocktypes[blocki])
+            blocki+=1
+        plot_blocktypes_as_rows.append(pb_row)
+        
+    checkrow = [ bt for row in plot_blocktypes_as_rows for bt in row ]
+    for bval in checkrow==plot_blocktypes:
+        if bval==False:
+            print("error when generating indexweightrandom as rows")
+
+    return plot_blocktypes_as_rows
 
 
 
