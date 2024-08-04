@@ -193,6 +193,7 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005, showInfo=Fals
 
     # for now, just to see this artificial example
     plot_chances = [0.5, 0.5]
+    plot_chances = [0.8, 0.2]
 
 
     rng = random.default_rng()
@@ -200,6 +201,10 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005, showInfo=Fals
     accuracy_reached = False
     counter = 0
     while not accuracy_reached:
+
+        if counter>20:
+            accuracy*=2
+        
         counter+=1
         plot_blocktypes = rng.choice( len(blocktypes) , numspaces, p=plot_chances)
 

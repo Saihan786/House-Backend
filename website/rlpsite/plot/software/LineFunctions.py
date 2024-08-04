@@ -169,7 +169,13 @@ def point_from_distance(leq, init_point, desired_distance, left_not_right=True):
     y = lineyval(leq, x)
 
     measureLine = LineString( [(x,y), (x-1, lineyval(leq, x-1))] )
-    factor = desired_distance / measureLine.length
+
+    if measureLine.length==0:
+        print("initpoint:", init_point)
+        print("desireddistance:", desired_distance)
+        print("measureLine:", measureLine)
+    else:
+        factor = desired_distance / measureLine.length
 
     new_point = (x-factor, lineyval(leq, x-factor))
     

@@ -291,7 +291,7 @@ def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
     return distinctblocks, filtered_blockpoints_as_rows
 
 
-def replaceBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=None, showBlocks=False):
+def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=None, showBlocks=False):
     """Plots a variety of blocktypes using weightedrandomness and a plotting guide.
     
     Blocks cannot be placed if they cause overlap.
@@ -351,7 +351,13 @@ def move_blocks_left(blocks_as_rows, rlppolygon, ax=None):
 
             init_point = cur.centroid
             prev_point = prev.centroid
-            leq = LineFunctions.lineEQ((init_point.x, init_point.y), (prev_point.x, prev_point.y))
+
+            try:
+                leq = LineFunctions.lineEQ((init_point.x, init_point.y), (prev_point.x, prev_point.y))
+            except:
+                print(init_point)
+                print(prev_point)
+                raise Exception
 
             final_point = LineFunctions.point_from_distance(leq, (init_point.x, init_point.y), dist(prev, cur))
 
@@ -412,54 +418,40 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     smallBlocks_as_rows, blockpoints_as_rows = initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
 
-    
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
 
+    new_blocks_as_rows = []
+    no_change = 0
+    while no_change < 5:
+        prev_blocks = new_blocks_as_rows
+        
+        plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+        new_blocks_as_rows = plotNewBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=new_blocks_as_rows, showBlocks=False)
 
-    
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
+        move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
 
+        sanitised_blocks = []
+        for row in new_blocks_as_rows:
+            trow = []
+            for block in row:
+                if rlppolygon.contains(block):
+                    trow.append(block)
+                else:
+                    print("block outside plot")
+            sanitised_blocks.append(trow)
+        new_blocks_as_rows=sanitised_blocks
 
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
+        sizeprev = len([block.exterior for row in prev_blocks for block in row])
+        sizenew = len([block.exterior for row in new_blocks_as_rows for block in row])
 
+        if sizeprev==sizenew:
+            no_change+=1
 
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
+    print(len([block.exterior for row in new_blocks_as_rows for block in row]))
 
-
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
-
-
-    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
-    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
-    left_shifted_blocks = randomBlocks_as_rows
-
-
-    geopandas.GeoSeries([block.exterior for row in randomBlocks_as_rows for block in row]).plot(ax=ax, color="green")
-
-
-
-
-
-    print(len([block.exterior for row in randomBlocks_as_rows for block in row]))
-
+    geopandas.GeoSeries([block.exterior for row in new_blocks_as_rows for block in row]).plot(ax=ax, color="green")
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     plt.show()
+
     return fig
 
 
