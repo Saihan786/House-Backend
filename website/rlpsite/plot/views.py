@@ -36,7 +36,7 @@ def generate(request):
         if form.is_valid():
             file = request.FILES["regionfile"].file
             rlp = geopandas.read_file(file)
-            fig, houses = startplot(rlp)
+            fig = startplot(rlp)
 
             mp = mpld3.plugins.MousePosition(fontsize=12, fmt='.6g')
             mpld3.plugins.connect(fig, mp)

@@ -160,6 +160,8 @@ def point_from_distance(leq, init_point, desired_distance, left_not_right=True):
     """Finds a new point using a line equation, desired distance, and initial point.
 
     Returns (x,y).
+
+    TODO: Fix so that a point right of the init point can be chosen over left
     
     """
 

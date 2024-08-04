@@ -169,8 +169,10 @@ def weightrandom(numspaces, blocktypes):
     return plot_blocktypes
 
 
-def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005):
+def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005, showInfo=False):
     """Returns a list of randomly determined blocktypes for initial plotting.
+
+    This list acts as a guide for plotting the blocks.
     
     The blocktypes are represented by their index in the blocktypes array.
 
@@ -194,6 +196,7 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005):
 
 
     rng = random.default_rng()
+
     accuracy_reached = False
     counter = 0
     while not accuracy_reached:
@@ -207,12 +210,13 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005):
                 accuracy_reached = False
                 break
     
-    print("counter =", counter)
-    print( len( [v for v in plot_blocktypes if v==0] ) )
-    print( len( [v for v in plot_blocktypes if v==0] ) / len(plot_blocktypes) )
-    print( len( [v for v in plot_blocktypes if v==1] ) )
-    print( len( [v for v in plot_blocktypes if v==1] ) / len(plot_blocktypes) )
-    print()
+    if showInfo:
+        print("counter =", counter)
+        print( len( [v for v in plot_blocktypes if v==0] ) )
+        print( len( [v for v in plot_blocktypes if v==0] ) / len(plot_blocktypes) )
+        print( len( [v for v in plot_blocktypes if v==1] ) )
+        print( len( [v for v in plot_blocktypes if v==1] ) / len(plot_blocktypes) )
+        print()
 
     plot_blocktypes_as_rows = []
     blocki = 0

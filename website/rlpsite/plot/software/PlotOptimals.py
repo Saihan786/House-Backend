@@ -10,12 +10,15 @@ import numpy as np
 from shapely import Polygon, LineString, affinity, Point, intersection
 from shapely import distance as dist
 
+website_call = False
 
 try:
     from .HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from .RedLinePlot import getRLP, getPath
     from ..software import PolygonFunctions, LineFunctions
     matplotlib.use('agg')
+
+    website_call = True
 
 except ImportError:
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
@@ -187,8 +190,8 @@ def filter_blocks(blocks_as_rows, smallest_up=None, replaceSmall=False):
             block = blocks_as_rows[x][y]
             keepBlock = True
             
-            next = blocks_as_rows[x][y-1]
-            if block.intersects(next):
+            prev = blocks_as_rows[x][y-1]
+            if block.intersects(prev):
                 keepBlock=False
 
             for nextrowblock in blocks_as_rows[x+1]:
@@ -206,10 +209,59 @@ def filter_blocks(blocks_as_rows, smallest_up=None, replaceSmall=False):
     return distinctblocks
 
 
+def append_blocks(blocks_as_rows, current_plot):
+    """Filters the blocks by removing the ones that overlap with current blocks.
+    This essentially appends the blocks that can be appended.
+
+    "current_plot" must have the same number of rows as blocks_as_rows.
+
+    Returns filtered blocks as rows.
+
+    Returns filtered blockpoints_as_rows (under same condition as filtered blocks).
+
+    *****WARNING*****
+    *****PERFORMANCE ISSUE O(N^2) WHEN COMPARING b_a_r TO c_p*****
+
+    """
+
+    distinctblocks = []
+
+    for x in range(-1+len(blocks_as_rows)):
+        row = []
+        for y in range(len( blocks_as_rows[x] )):
+            
+            block = blocks_as_rows[x][y]
+            keepBlock = True
+
+            current_row = current_plot[x]
+            for cur in current_row:
+                if block.intersects(cur):
+                    keepBlock = False
+            
+            prev = blocks_as_rows[x][y-1]
+            if block.intersects(prev):
+                keepBlock=False
+
+            for nextrowblock in blocks_as_rows[x+1]:
+                if block.intersects(nextrowblock):
+                    keepBlock=False
+
+            if keepBlock:
+                row.append(block)
+
+        distinctblocks.append(row)
+    distinctblocks.append( blocks_as_rows[ -1+len(blocks_as_rows) ] )
+
+    return distinctblocks
+
+
 def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
     """Returns blockpoints (as rows) that will be included in next iteration.
 
     Creates an initial plot which only uses the smallest blocktype.
+
+    This method is mostly just to see which blockpoints are not invalid for plotting
+    (like blockpoints that cause overlaps with the polygon).
     
     """
 
@@ -239,10 +291,10 @@ def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
     return distinctblocks, filtered_blockpoints_as_rows
 
 
-def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon, showBlocks=False):
-    """Plots different blocktypes using weightedrandomness and an initial plot.
+def replaceBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=None, showBlocks=False):
+    """Plots a variety of blocktypes using weightedrandomness and a plotting guide.
     
-    If a block can't be replaced, it stays the same.
+    Blocks cannot be placed if they cause overlap.
     
     """
 
@@ -253,7 +305,7 @@ def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppol
         row = []
         for y in range(len( rows_of_bps[x] )):
             bp = rows_of_bps[x][y]
-            bt = plot_blocktypes_as_rows[x][y]
+            bt = plotting_guide[x][y]
             up = unitPolygons[bt]
 
             block = move_block_to_point(up, bp, rlppolygon)
@@ -267,7 +319,17 @@ def replaceBlocks(rows_of_bps, unitPolygons, plot_blocktypes_as_rows, ax, rlppol
         if up.area < smallest_up.area:
             smallest_up = up
     
-    distinctblocks = filter_blocks(blocks_as_rows, smallest_up, replaceSmall=True)
+    if current_plot:
+        appended_blocks = append_blocks(blocks_as_rows, current_plot)
+
+        distinctblocks = []
+        for i in range(len(current_plot)):
+            distinctblocks += [current_plot[i]+appended_blocks[i]]
+        
+        
+        
+    else:
+        distinctblocks = filter_blocks(blocks_as_rows, smallest_up, replaceSmall=True)
 
     if showBlocks:
         geopandas.GeoSeries([block.exterior for row in distinctblocks for block in row]).plot(ax=ax, color="green")
@@ -297,6 +359,12 @@ def move_blocks_left(blocks_as_rows, rlppolygon, ax=None):
             block = move_block_to_point(up, Point(final_point))
 
             row[i] = block
+
+
+def oneIteration():
+    """Plots one iteration of houses and housetypes and left-shifts them until they're touching each other."""
+
+
     
 
 def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
@@ -338,20 +406,62 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
                 blockpoints.append(blockpoint)
                 row.append(blockpoint)
         rows_of_bps.append(row)
+
+    # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
     
     smallBlocks_as_rows, blockpoints_as_rows = initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
 
-    plot_blocktypes_as_rows = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
     
-    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plot_blocktypes_as_rows, ax, rlppolygon, showBlocks=False)
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, showBlocks=False)
     move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
+
+    
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
+
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
+
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
+
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
+
+    plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+    randomBlocks_as_rows = replaceBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=left_shifted_blocks, showBlocks=False)
+    move_blocks_left(randomBlocks_as_rows, rlppolygon, ax=ax)
+    left_shifted_blocks = randomBlocks_as_rows
+
 
     geopandas.GeoSeries([block.exterior for row in randomBlocks_as_rows for block in row]).plot(ax=ax, color="green")
-    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
 
+
+
+
+
+    print(len([block.exterior for row in randomBlocks_as_rows for block in row]))
+
+    geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     plt.show()
-    # return (fig, randomBlocks)
+    return fig
+
 
 
 
@@ -367,10 +477,13 @@ def example():
 
     unitPolygons = makeUnitPolygons(blocktypes)
 
-    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
+    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
     mht.addProportions(bestproportions)
 
     return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
+
+if not website_call:
+    example()
 
 
 def startplot(rlp, showCloseToOrigin=True):
@@ -385,8 +498,7 @@ def startplot(rlp, showCloseToOrigin=True):
 
     unitPolygons = makeUnitPolygons(blocktypes)
 
-    basicproportions = generateBasicTypes(mht.getBlockTypes(), maxsize=rlppolygon.area, showResults=False)
-    mht.addProportions(basicproportions)
-    return plotProportions(blocktypes, unitPolygons, basicproportions, rlppolygon)
+    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
+    mht.addProportions(bestproportions)
 
-example()
+    return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
