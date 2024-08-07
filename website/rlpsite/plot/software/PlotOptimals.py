@@ -12,9 +12,11 @@ from shapely import distance as dist
 
 website_call = False
 
+
 try:
     from .HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from .RedLinePlot import getRLP, getPath
+    from .InputBlocks import getUP
     from ..software import PolygonFunctions, LineFunctions
     matplotlib.use('agg')
 
@@ -24,6 +26,7 @@ except ImportError:
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from RedLinePlot import getRLP, getPath
     import PolygonFunctions, LineFunctions
+    from InputBlocks import getUP
 
 
 X, Y = 0, 1
@@ -414,6 +417,7 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         rows_of_bps.append(row)
 
     # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
+    # geopandas.GeoSeries(perpLines).plot(ax=ax, color="red")
     
     smallBlocks_as_rows, blockpoints_as_rows = initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
@@ -450,11 +454,8 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 
     geopandas.GeoSeries([block.exterior for row in new_blocks_as_rows for block in row]).plot(ax=ax, color="green")
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
-    plt.show()
 
     return fig
-
-
 
 
 def example():
@@ -467,7 +468,9 @@ def example():
     fillMHT(mht)
     blocktypes = mht.getBlockTypes()
 
-    unitPolygons = makeUnitPolygons(blocktypes)
+    # unitPolygons = makeUnitPolygons(blocktypes)
+    unitPolygons =  [getUP()] + makeUnitPolygons(blocktypes)
+    print(unitPolygons)
 
     bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
     mht.addProportions(bestproportions)
@@ -476,6 +479,7 @@ def example():
 
 if not website_call:
     example()
+    plt.show()
 
 
 def startplot(rlp, showCloseToOrigin=True):
