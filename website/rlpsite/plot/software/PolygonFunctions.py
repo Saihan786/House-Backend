@@ -40,7 +40,7 @@ def findLongestLineIndex(polygon):
 
 
 def findLongestLine(polygon):
-    """Returns longest line of the polygon."""
+    """Returns longest line of the polygon as a list of coords."""
 
     lines, longestlineindex = findLongestLineIndex(polygon)
 
