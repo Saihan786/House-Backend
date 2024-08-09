@@ -3,11 +3,12 @@
 import geopandas
 import matplotlib.pyplot as plt
 from shapely.ops import unary_union
+from shapely import LineString
 
 try:
-    from ..software import PolygonFunctions
+    from ..software import LineFunctions
 except ImportError:
-    import PolygonFunctions
+    import LineFunctions
 
 
 dxfblock = None
@@ -65,8 +66,10 @@ def readDXF():
 (dxfblock, gardens, parking, house) = readDXF()
 
 
-def dxf_parallel_to_ll(longestline=None):
-    """Rotates the whole dxf so the house is parallel to the given longest line.
+def dxf_parallel_to_ll(dxf, point_about_rotation=None, longestline=None):
+    """Rotates the gdf until the house is parallel to the resultLine.
+
+    The rotation is about the given point or the origin if it is not given.
     
     Returns the updated dxf.
 
@@ -74,9 +77,21 @@ def dxf_parallel_to_ll(longestline=None):
     
     """
 
-    pass
-dxf_parallel_to_ll()
+    if point_about_rotation is None:
+        point_about_rotation=(0,0)
 
+    house = dxf.loc[dxf.Layer == 'HOUSE NEW'].geometry
+    if len(house) == 1:
+        for actual_polygon in house:
+            house = actual_polygon
+    else:
+        print("error when making dxf parallel to ll")
+
+    polygonLine = LineString([house.exterior.coords[0], house.exterior.coords[1]])
+    resultAngle, changeAngle = LineFunctions.findAngle(longestline), LineFunctions.findAngle(polygonLine)
+
+    dxf.geometry = dxf.rotate(resultAngle-changeAngle, point_about_rotation, use_radians=True)
+    
 
 def get_dxf_as_gdf():
     """Returns the combination of the garden, parking, and house as a GeoDataFrame.
@@ -116,5 +131,8 @@ def plotDXF(dxfblock, ax=None):
 # dxfblock.geometry = dxfblock.geometry.apply(getOne)
 # print( dxfblock )
 
-plotDXF(dxfblock=dxfblock)
-plt.show()
+# plotDXF(dxfblock=dxfblock)
+# dxf_parallel_to_ll(dxfblock, longestline=LineString( [(0,0),(-10,-10)] ))
+# plotDXF(dxfblock=dxfblock)
+
+# plt.show()

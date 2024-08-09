@@ -266,6 +266,8 @@ def centerAtOrigin(polygon, showTranslation=False):
     Exists the option to show the translation, which is only effective if the distance translated is not too large.
     
     Returns the moved polygon.
+
+    *****ONLY WORKS FOR POLYGONS*****
     
     """
 
