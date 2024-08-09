@@ -3,7 +3,7 @@
 import geopandas
 import matplotlib.pyplot as plt
 from shapely.ops import unary_union
-from shapely import LineString
+from shapely import LineString, Polygon
 
 try:
     from ..software import LineFunctions
@@ -15,6 +15,8 @@ dxfblock = None
 gardens = None
 parking = None
 house = None
+
+X,Y = 0,1
 
 
 def set_up_colors(dxfblock):
@@ -66,6 +68,22 @@ def readDXF():
 (dxfblock, gardens, parking, house) = readDXF()
 
 
+def plotDXF(dxfblock, ax=None):
+    """Plots the gardens, parking, and house from a single GeoDataFrame.
+    
+    Gardens, house, and parking may be plotted on separate axes if an axes is not
+    provided AND no 'colors' column is present.
+    
+    """
+
+    if 'colors' in dxfblock.columns:
+        dxfblock.plot(ax=ax, color=dxfblock['colors'])
+    else:
+        geopandas.GeoSeries(gardens).plot(ax=ax, color="green")
+        geopandas.GeoSeries(house).plot(ax=ax, color="blue")
+        geopandas.GeoSeries(parking).plot(ax=ax, color="grey")
+
+
 def dxf_parallel_to_ll(dxf, point_about_rotation=None, longestline=None):
     """Rotates the gdf until the house is parallel to the resultLine.
 
@@ -91,6 +109,20 @@ def dxf_parallel_to_ll(dxf, point_about_rotation=None, longestline=None):
     resultAngle, changeAngle = LineFunctions.findAngle(longestline), LineFunctions.findAngle(polygonLine)
 
     dxf.geometry = dxf.rotate(resultAngle-changeAngle, point_about_rotation, use_radians=True)
+
+
+def rotateNinety(dxf, point_about_rotation=None):
+    """Rotates the given dxf 90 degrees.
+    
+    To be used after the dxf is parallel to the longest line, to make sure
+    it is facing the road.
+    
+    """
+
+    if point_about_rotation is None:
+            point_about_rotation=(0,0)
+
+    dxf.geometry = dxf.rotate(90, point_about_rotation, use_radians=False)
     
 
 def get_dxf_as_gdf():
@@ -103,36 +135,25 @@ def get_dxf_as_gdf():
     return dxfblock
 
 
+def centerDXFAtOrigin(dxf):
+    """Moves the dxf until the origin is the mean of all of its points.
+
+    Exists the option to show the translation, which is only effective if the distance translated is not too large.
+    
+    This assumes that the garden
+    
+    *****ONLY WORKS FOR GDFs*****
+    
+    """
+
+    center = unary_union(dxf.geometry).centroid
+    def move(polygon):
+        shiftcoords = [(coord[X]-center.x, coord[Y]-center.y) for coord in polygon.exterior.coords[:-1]]
+        return Polygon(shiftcoords)
+    dxf.geometry = dxf.geometry.apply(move)
+
+
 def get_dxf_separate():
     """Returns each part of the DXF polygon separately"""
 
     return gardens, parking, house
-
-
-def plotDXF(dxfblock, ax=None):
-    """Plots the gardens, parking, and house from a single GeoDataFrame.
-    
-    Gardens, house, and parking may be plotted on separate axes if an axes is not
-    provided AND no 'colors' column is present.
-    
-    """
-
-    if 'colors' in dxfblock.columns:
-        dxfblock.plot(ax=ax, color=dxfblock['colors'])
-    else:
-        geopandas.GeoSeries(gardens).plot(ax=ax, color="green")
-        geopandas.GeoSeries(house).plot(ax=ax, color="blue")
-        geopandas.GeoSeries(parking).plot(ax=ax, color="grey")
-
-
-
-# from shapely import LineString
-# def getOne(polygon): return LineString([ (0,0), (1,1) ])
-# dxfblock.geometry = dxfblock.geometry.apply(getOne)
-# print( dxfblock )
-
-# plotDXF(dxfblock=dxfblock)
-# dxf_parallel_to_ll(dxfblock, longestline=LineString( [(0,0),(-10,-10)] ))
-# plotDXF(dxfblock=dxfblock)
-
-# plt.show()
