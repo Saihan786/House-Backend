@@ -5,21 +5,126 @@ import geopandas.geoseries
 import matplotlib.pyplot as plt
 import geopandas
 
-from shapely import Polygon, LineString, affinity, Point, intersection
+from shapely import Polygon, LineString, affinity, Point
 from shapely import distance as dist
+from shapely.ops import unary_union
 
 try:
-    from ..software import PolygonFunctions, LineFunctions
+    from ..software import PolygonFunctions, LineFunctions, InputBlocks
     matplotlib.use('agg')
 
     website_call = True
 
 except ImportError:
-    import PolygonFunctions, LineFunctions
+    import PolygonFunctions, LineFunctions, InputBlocks
 
 X, Y = 0, 1
 linep1idx, linep2idx = 0, 1
 
+
+class UnitPolygon():
+    """An instance of this class represents one type of block that can be plotted.
+    
+    This class is used to abstract over the idea of all functionalities associated with
+    unit polygons, like iterating through its coordinates or moving it around, while enabling
+    versatility of the actual "item_to_plot" being plotted.
+
+    The "item_to_plot" being plotted can either be a polygon or a gdf, for now.
+    
+    """
+
+    def __init__(self, type, item_to_plot) -> None:
+        """Determines what the "item_to_plot" being plotted is."""
+        
+        if type=="gdf":
+            self.type = type
+        if type=="polygon":
+            self.type = type
+        
+        self.item_to_plot = item_to_plot
+
+    
+    def __move_single_polygon(self, polygon, blockpoint, fit_inside_polygon=None):
+        """Returns a single polygon moved to the desired location."""
+        
+        corners = []
+        for corner in polygon.exterior.coords[:-1]:
+            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+        block = Polygon(corners)
+
+        if (not fit_inside_polygon) or fit_inside_polygon.contains(block):
+            return block
+        else:
+            return None
+    
+
+    def move(self, blockpoint, fit_inside_polygon=None):
+        """Returns a block that has been moved to the desired point. 'Blockpoint' is a Point() object.
+
+        The block may be a single polygon or a gdf of polygons.
+    
+        Optionally returns None if the block does not fit inside the polygon.
+
+        Requires that the up has center origin to begin with.
+
+        If the item is a gdf, then the gdf itself changes while a reference to it is returned.
+        
+        """
+        
+        if self.type=="polygon":
+            return self.__move_single_polygon(self.item_to_plot, blockpoint, fit_inside_polygon)
+        elif self.type=="gdf":
+            self.item_to_plot.geometry = self.item_to_plot.geometry.apply(self.__move_single_polygon, args=[blockpoint, fit_inside_polygon])
+            return self.item_to_plot
+    
+
+    def center_at_origin(self):
+        """Returns a block that has been centered at the origin.
+        
+        For GDFs, this adjusts the actual gdf while returning a new reference to it.
+        
+        """
+        
+        if self.type=="polygon":
+            return PolygonFunctions.centerAtOrigin(self.item_to_plot)
+        elif self.type=="gdf":
+            return InputBlocks.centerDXFAtOrigin(self.item_to_plot)
+    
+
+    def area(self):
+        """Returns total area covered by item."""
+    
+        if self.type=="polygon":
+            return self.item_to_plot.area
+        elif self.type=="gdf":
+            total_area = 0
+            for area in self.item_to_plot.area:
+                total_area+=area
+            return total_area
+
+
+    def centroid(self):
+        """Returns total area covered by item."""
+        if self.type=="polygon":
+            return self.item_to_plot.centroid
+        elif self.type=="gdf":
+            return unary_union(self.item_to_plot.geometry).centroid
+    
+
+    def intersects(self, shape):
+        """Returns true if the item intersects the given shape.
+        
+        Returns true if, should the item be a gdf, any parts of the gdf
+        intersect with the given block.
+        
+        """
+        
+        if self.type=="polygon":
+            return self.item_to_plot.intersects(shape)
+        elif self.type=="gdf":
+            return True in list( self.item_to_plot.intersects(shape) )
+
+            
 
 def blocklines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestline=None):
     """Returns a list of all new lines, each from a point on the lines of the given path.

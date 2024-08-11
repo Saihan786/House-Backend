@@ -186,21 +186,6 @@ def findLinePaths(polygon, showPaths=False):
     return retval
 
 
-def lines(polygon):
-        """Returns the longest line and its adjacent line of a given polygon."""
-
-        longestline = findLongestLine(polygon)
-        longestline = LineFunctions.orderLine(longestline)
-        adjacentline, corner = findAdjacentLine(polygon)
-        adjacentline = LineFunctions.orderLine(adjacentline)
-
-        return longestline, adjacentline, corner
-
-
-def adjacentlines(polygon):
-    pass
-
-
 def rotatePolygon(resultLine, polygon, showRotation=False):
     """"Rotates the polygon until it is parallel to the resultLine.
     
@@ -271,12 +256,6 @@ def centerAtOrigin(polygon, showTranslation=False):
     
     """
 
-    leftmost = polygon.exterior.coords[0][X]
-    bottom = polygon.exterior.coords[0][Y]
-    for coord in polygon.exterior.coords[1:-1]:
-        if coord[X] < leftmost : leftmost=coord[X]
-        if coord[Y] < bottom : bottom=coord[Y]
-    
     center = polygon.centroid
     shiftcoords = [(coord[X]-center.x, coord[Y]-center.y) for coord in polygon.exterior.coords[:-1]]
 

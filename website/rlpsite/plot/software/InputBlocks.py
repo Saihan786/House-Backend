@@ -22,8 +22,6 @@ X,Y = 0,1
 def centerDXFAtOrigin(dxf):
     """Moves the dxf until the origin is the mean of all of its points.
 
-    Exists the option to show the translation, which is only effective if the distance translated is not too large.
-    
     This assumes that the garden
     
     *****ONLY WORKS FOR GDFs*****

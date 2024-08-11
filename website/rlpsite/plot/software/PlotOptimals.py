@@ -24,8 +24,7 @@ try:
 except ImportError:
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from RedLinePlot import getRLP, getPath
-    import PolygonFunctions, LineFunctions, BlockFunctions
-    import InputBlocks
+    import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
 
 
 X, Y = 0, 1
@@ -145,7 +144,7 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
                 row.append(blockpoint)
         rows_of_bps.append(row)
 
-    geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
+    # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
     
     smallBlocks_as_rows, blockpoints_as_rows = BlockFunctions.initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
@@ -208,34 +207,27 @@ def example():
 
 if not website_call:
     # example()
+
+
     rlp = getRLP(getPath())
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
-    # fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
 
-    longestline = PolygonFunctions.findLongestLine(rlppolygon)
-
-
-
-
-
-    newline = []
-    xval = longestline[0][X]
-    yval = longestline[0][Y]
-    for point in longestline:
-        point = (point[X]-xval, point[Y]-yval)
-        point = (point[X]/10 , point[Y]/10)
-        newline.append(point)
-
-    # geopandas.GeoSeries(LineString(newline)).plot(ax=ax)
-    # InputBlocks.plotDXF(ax=ax)
-    print(InputBlocks.getUP())
-
-
-    # unitPolygons = [PolygonFunctions.rotatePolygon(LineString(longestline), uP, showRotation=False) for uP in unitPolygons]
-    # unitPolygons = [PolygonFunctions.centerAtOrigin(uP, showTranslation=False) for uP in unitPolygons]
-
+    (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
+    upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
     
+    InputBlocks.plotDXF(upgdf.item_to_plot, ax=ax)
+
+    upgdf.move(Point(10,10))
+    upgdf.center_at_origin()
+    print(upgdf.intersects(shape=Point(100,200)))
+    InputBlocks.plotDXF(upgdf.item_to_plot, ax=ax)
+    
+    geopandas.GeoSeries(upgdf.centroid()).plot(ax=ax, color="black")
+
+
+
     plt.show()
 
 
