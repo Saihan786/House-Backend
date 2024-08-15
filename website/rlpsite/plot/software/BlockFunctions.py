@@ -192,7 +192,9 @@ class UnitPolygon():
                 distances = []
                 for p in self.item_to_plot.geometry:
                     distances_to_up = geopandas.GeoSeries.distance(up.item_to_plot, p)
-                    distances.append( min(list(distances_to_up)) )
+                    closest_distance = min(list(distances_to_up))
+                    distances.append( closest_distance )
+                distances = [min(distances) for d in distances]
 
                 new_points = []
                 for d in distances:
@@ -298,6 +300,23 @@ class UnitPolygon():
     def distance(self, up):
         """Returns the distance between the item of this and the item of another
         UnitPolygon."""
+
+    
+    # def is_contained_by(self, polygon):
+    #     """Checks if the item is contained inside the polygon.
+        
+    #     Can be used to check if the whole moved geometry stays inside the polygon.
+
+    #     If any of the polygons don't fit, returns None.
+        
+    #     """
+
+    #     if self.type=="polygon":
+    #         return polygon.contains(self.item_to_plot)
+    #     elif self.type=="gdf":
+    #         for p in self.item_to_plot.geometry:
+    #             if not polygon.contains(p):
+    #                 return False
 
         
 
