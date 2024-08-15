@@ -156,6 +156,8 @@ class UnitPolygon():
 
         Requires that the up has center origin to begin with.
 
+        WIP - FIX ALL CASES
+
         """
 
         block = None
@@ -176,18 +178,23 @@ class UnitPolygon():
                 return centered.move(Point(final_point))
 
             elif self.type=="gdf":
+                # FIX THIS CASE
                 final_point = LineFunctions.point_from_distance(leq, init_point, dist(self, up))
                 centered = self.copy().center_at_origin()
                 return centered.move(Point(final_point))
         elif shape_type=="gdf":
             if self.type=="polygon":
+                # FIX THIS CASE
                 final_point = LineFunctions.point_from_distance(leq, init_point, dist(self, up))
                 centered = self.copy().center_at_origin()
                 return centered.move(Point(final_point))
             elif self.type=="gdf":
-                distances = geopandas.GeoSeries.distance(self.item_to_plot, up.item_to_plot)
-                new_points = []
+                distances = []
+                for p in self.item_to_plot.geometry:
+                    distances_to_up = geopandas.GeoSeries.distance(up.item_to_plot, p)
+                    distances.append( min(list(distances_to_up)) )
 
+                new_points = []
                 for d in distances:
                     new_points.append( Point(LineFunctions.point_from_distance(leq, init_point, d)) )
 
