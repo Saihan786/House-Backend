@@ -60,6 +60,8 @@ class ManageBlockTypes():
         self.blockTypes.append( BlockType(name, revenue, cost, width, length, size) )
 
     def addNewBlockType(self, name, revenue, cost, width, length):
+        """Adds the name, revenue, cost, width, and length."""
+        
         size = float(width) * float(length)
         self.blockTypes.append( BlockType(name, revenue, cost, width, length, size) )
 
@@ -192,8 +194,9 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005, showInfo=Fals
     
 
     # for now, just to see this artificial example
-    plot_chances = [0.5, 0.5]
+    # plot_chances = [0.5, 0.5]
     # plot_chances = [1.0, 0.0]
+    plot_chances = [1.0]
 
 
     rng = random.default_rng()

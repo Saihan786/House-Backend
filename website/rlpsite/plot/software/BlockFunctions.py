@@ -44,38 +44,161 @@ class UnitPolygon():
         self.item_to_plot = item_to_plot
 
     
-    def __move_single_polygon(self, polygon, blockpoint, fit_inside_polygon=None):
-        """Returns a single polygon moved to the desired location."""
+    def __move_single_polygon(self, polygon, blockpoint, polygon_to_fit_inside=None, geometry=None):
+        """Returns a single polygon moved to the desired location.
+
+        The polygon does not have to be the item of this class instance.
+
+        Returns None for empty Points.
+
+        If "polygon_to_fit_inside"=True and "geometry"=True, the entire geometry must fit inside the
+        polygon or None is returned for all its polygons.
         
+        """
+
         corners = []
-        for corner in polygon.exterior.coords[:-1]:
-            corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+        try:
+            for corner in polygon.exterior.coords[:-1]:
+                corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+        except:
+            return None
         block = Polygon(corners)
 
-        if (not fit_inside_polygon) or fit_inside_polygon.contains(block):
+        if (not polygon_to_fit_inside) or polygon_to_fit_inside.contains(block):
             return block
         else:
             return None
+        
     
+    def __move_single_geometry(self, blockpoint, geometry, polygon_to_fit_inside=None):
+        """Returns the whole moved geometry as a list.
+        
+        Can be used to check if the whole moved geometry stays inside the polygon.
 
-    def move(self, blockpoint, fit_inside_polygon=None):
-        """Returns a block that has been moved to the desired point. 'Blockpoint' is a Point() object.
+        If any of the polygons don't fit, the original geometry is returned as a list
+        
+        """
 
-        The block may be a single polygon or a gdf of polygons.
+
+        blocks = []
+        for p in geometry:
+            corners = []
+            try:
+                for corner in p.exterior.coords[:-1]:
+                    corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
+            except:
+                return None
+            block = Polygon(corners)
+            blocks.append(block)
+
+        if polygon_to_fit_inside:
+            for b in blocks:
+                if not polygon_to_fit_inside.contains(b):
+                    return [p for p in geometry]
+        return blocks
+
+    
+    def move(self, blockpoint, polygon_to_fit_inside=None):
+        """Returns a block that has been moved to the desired point. 'Blockpoint' is a Point() object or a gdf of Points.
+
+        Cannot have a blockpoint which is a gdf while the item is a Polygon (returns None in this case).
+        For a gdf blockpoint, it must have a geometry that is the same dimension as the gdf item, or None is returned.
+
+        The block may be a single polygon or a *copy* gdf of polygons (to prevent the item from changing).
+    
+        Optionally returns None if the block does not fit inside the polygon.
+
+        """
+
+        copyblock = self.item_to_plot.copy()
+        InputBlocks.centerDXFAtOrigin(copyblock)
+
+        try:
+            blockpoint.geometry
+            bp_is_gdf = True
+        except:
+            bp_is_gdf = False
+
+        if self.type=="polygon" and not bp_is_gdf:
+            return self.__move_single_polygon(self.item_to_plot, blockpoint, polygon_to_fit_inside)
+
+        elif self.type=="gdf" and bp_is_gdf:
+            try:
+                moved_polygons = []
+                counter = 0
+                for polygon in copyblock.geometry:
+                    bp = blockpoint.geometry[counter]
+                    moved_polygon = self.__move_single_polygon(polygon=polygon, blockpoint=bp, polygon_to_fit_inside=polygon_to_fit_inside)
+                    moved_polygons.append(moved_polygon)
+                    counter+=1
+                copyblock.geometry = moved_polygons
+            except Exception as e:
+                print("reach none")
+                print(e)
+                return None
+            return copyblock
+        
+        elif self.type=="gdf" and not bp_is_gdf:
+            result = self.__move_single_geometry(blockpoint=blockpoint, geometry=copyblock.geometry, polygon_to_fit_inside=polygon_to_fit_inside)
+            result = copyblock.geometry.apply(self.__move_single_polygon, args=[blockpoint, polygon_to_fit_inside, copyblock.geometry])
+            copyblock.geometry = result
+
+            return copyblock
+        return None
+
+
+    def move_to(self, up):
+        """Returns a block that touches the given UP. UP is a UnitPolygon.
+        
+        The block may be a single polygon or a *copy* gdf of polygons (to prevent the item from changing).
     
         Optionally returns None if the block does not fit inside the polygon.
 
         Requires that the up has center origin to begin with.
 
-        If the item is a gdf, then the gdf itself changes while a reference to it is returned.
-        
         """
+
+        block = None
+        shape_type = up.type
         
-        if self.type=="polygon":
-            return self.__move_single_polygon(self.item_to_plot, blockpoint, fit_inside_polygon)
-        elif self.type=="gdf":
-            self.item_to_plot.geometry = self.item_to_plot.geometry.apply(self.__move_single_polygon, args=[blockpoint, fit_inside_polygon])
-            return self.item_to_plot
+        init_point = self.centroid()
+        prev_point = up.centroid()
+
+        try:
+            leq = LineFunctions.lineEQ((init_point.x, init_point.y), (prev_point.x, prev_point.y))
+        except:
+            raise Exception
+        
+        if shape_type=="polygon":
+            if self.type=="polygon":
+                final_point = LineFunctions.point_from_distance(leq, init_point, dist(self, up))
+                centered = self.copy().center_at_origin()
+                return centered.move(Point(final_point))
+
+            elif self.type=="gdf":
+                final_point = LineFunctions.point_from_distance(leq, init_point, dist(self, up))
+                centered = self.copy().center_at_origin()
+                return centered.move(Point(final_point))
+        elif shape_type=="gdf":
+            if self.type=="polygon":
+                final_point = LineFunctions.point_from_distance(leq, init_point, dist(self, up))
+                centered = self.copy().center_at_origin()
+                return centered.move(Point(final_point))
+            elif self.type=="gdf":
+                distances = geopandas.GeoSeries.distance(self.item_to_plot, up.item_to_plot)
+                new_points = []
+
+                for d in distances:
+                    new_points.append( Point(LineFunctions.point_from_distance(leq, init_point, d)) )
+
+                new_points = geopandas.GeoSeries(new_points)
+                new_points_wrapper = geopandas.GeoDataFrame(geometry=new_points)
+                moved_item = self.copy().move(blockpoint=new_points_wrapper)
+                return moved_item
+        else:
+            print("Unrecognised shape_type when intersecting UnitPolygon.")
+            return None
+        return block
     
 
     def center_at_origin(self):
@@ -88,7 +211,8 @@ class UnitPolygon():
         if self.type=="polygon":
             return PolygonFunctions.centerAtOrigin(self.item_to_plot)
         elif self.type=="gdf":
-            return InputBlocks.centerDXFAtOrigin(self.item_to_plot)
+            InputBlocks.centerDXFAtOrigin(self.item_to_plot)
+            return self.item_to_plot
     
 
     def area(self):
@@ -104,25 +228,71 @@ class UnitPolygon():
 
 
     def centroid(self):
-        """Returns total area covered by item."""
+        """Returns centroid of union of polygons of item."""
+
         if self.type=="polygon":
             return self.item_to_plot.centroid
         elif self.type=="gdf":
             return unary_union(self.item_to_plot.geometry).centroid
     
 
-    def intersects(self, shape):
+    def intersects(self, shape, shape_type="polygon"):
         """Returns true if the item intersects the given shape.
         
         Returns true if, should the item be a gdf, any parts of the gdf
         intersect with the given block.
+
+        shape_type indicates different cases for the shape and how the 
+        UnitPolygon should treat it in each case.
         
         """
         
+        if shape_type=="polygon":
+            if self.type=="polygon":
+                return self.item_to_plot.intersects(shape)
+            elif self.type=="gdf":
+                return True in list( self.item_to_plot.intersects(shape) )
+        elif shape_type=="UnitPolygon":
+            if self.type=="polygon":
+                return self.item_to_plot.intersects(shape.item_to_plot)
+            elif self.type=="gdf":
+                return True in list( self.item_to_plot.intersects(shape.item_to_plot) )
+        else:
+            print("Unrecognised shape_type when intersecting UnitPolygon.")
+
+        
+    
+    def rotate(self, line, should_be_centered=True):
+        """Returns a rotated polygon or dxf, and rotates the item in both cases in the process.
+        
+        The rotated item is parallel to the given line.
+
+        Centers the item at the origin normally.
+        
+        """
+
+
         if self.type=="polygon":
-            return self.item_to_plot.intersects(shape)
+            self.item_to_plot = PolygonFunctions.rotatePolygon(LineString(line), self.item_to_plot, showRotation=False)
         elif self.type=="gdf":
-            return True in list( self.item_to_plot.intersects(shape) )
+            InputBlocks.dxf_parallel_to_ll(dxf=self.item_to_plot, center_at_origin=False, resultline=line)
+        
+        if should_be_centered:
+            return self.center_at_origin()
+        return self.item_to_plot
+    
+
+    def copy(self):
+        """Returns a copy of this UnitPolygon instance."""
+
+        return UnitPolygon(type=self.type, item_to_plot=self.item_to_plot)
+    
+
+    def distance(self, up):
+        """Returns the distance between the item of this and the item of another
+        UnitPolygon."""
+
+        
 
             
 
@@ -194,7 +364,7 @@ def move_block_to_point(up, blockpoint, rlppolygon=None):
         return None
     
 
-def filter_blocks(blocks_as_rows, smallest_up=None, replaceSmall=False):
+def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):
     """Filters the blocks by removing the ones that overlap with another block.
     
     Returns filtered blocks as rows.
@@ -205,28 +375,33 @@ def filter_blocks(blocks_as_rows, smallest_up=None, replaceSmall=False):
     
     distinctblocks = []
 
-    for x in range(-1+len(blocks_as_rows)):
+    for x in range(-1+len(block_ups_as_rows)):
         row = []
-        for y in range(len( blocks_as_rows[x] )):
+        for y in range(len( block_ups_as_rows[x] )):
             
-            block = blocks_as_rows[x][y]
+            block_up = block_ups_as_rows[x][y]
             keepBlock = True
+            shape_type = "UnitPolygon"
             
-            prev = blocks_as_rows[x][y-1]
-            if block.intersects(prev):
+            prev = block_ups_as_rows[x][y-1]
+
+
+            if block_up.intersects(prev, shape_type=shape_type):
                 keepBlock=False
 
-            for nextrowblock in blocks_as_rows[x+1]:
-                if block.intersects(nextrowblock):
+            for nextrowblock in block_ups_as_rows[x+1]:
+                if block_up.intersects(nextrowblock, shape_type=shape_type):
                     keepBlock=False
 
             if keepBlock:
-                row.append(block)
+                row.append(block_up)
             elif replaceSmall:
-                row.append( move_block_to_point(smallest_up, block.centroid) )
+                center = block_up.centroid()
+                new_block = smallest_up.move(blockpoint=center)
+                row.append( UnitPolygon(type=block_up.type, item_to_plot=new_block) )
 
         distinctblocks.append(row)
-    distinctblocks.append( blocks_as_rows[ -1+len(blocks_as_rows) ] )
+    distinctblocks.append( block_ups_as_rows[ -1+len(block_ups_as_rows) ] )
 
     return distinctblocks
 
@@ -277,7 +452,7 @@ def append_blocks(blocks_as_rows, current_plot):
     return distinctblocks
 
 
-def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
+def initPlot(make_smallblocks, rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
     """Returns blockpoints (as rows) that will be included in next iteration.
 
     Creates an initial plot which only uses the smallest blocktype.
@@ -289,28 +464,39 @@ def initPlot(rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False):
 
     smallest_up = unitPolygons[0]
     for up in unitPolygons:
-        if up.area < smallest_up.area:
+        if up.area() < smallest_up.area():
             smallest_up = up
 
-
-    blocks = []
     filtered_blockpoints_as_rows = []
-    for row in rows_of_bps:
-        newbprow = []
-        newblockrow = []
-        for blockpoint in row:
-            block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
-            if block is not None:
-                newblockrow.append(block)
-                newbprow.append(blockpoint)
-        blocks.append(newblockrow)
-        filtered_blockpoints_as_rows.append(newbprow)
+    distinctblock_ups = []
+    
+    if make_smallblocks:
+        block_ups = []
+        for row in rows_of_bps:
+            newbprow = []
+            newblockrow = []
+            for blockpoint in row:
+                block = smallest_up.move(blockpoint=blockpoint)
+                # block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
+                if block is not None:
+                    newblockrow.append( UnitPolygon(type=smallest_up.type, item_to_plot=block) )
+                    newbprow.append(blockpoint)
+            block_ups.append(newblockrow)
+            filtered_blockpoints_as_rows.append(newbprow)
 
-    distinctblocks = filter_blocks(blocks)
+        distinctblock_ups = filter_blocks(block_ups)
+    else:
+        for row in rows_of_bps:
+            newbprow = []
+            for blockpoint in row:
+                block = smallest_up.move(blockpoint=blockpoint)
+                if block is not None:
+                    newbprow.append(blockpoint)
+            filtered_blockpoints_as_rows.append(newbprow)
 
     if showInit:
-        geopandas.GeoSeries([db.exterior for row in distinctblocks for db in row]).plot(ax=ax, color="green")
-    return distinctblocks, filtered_blockpoints_as_rows
+        geopandas.GeoSeries([db.exterior for row in distinctblock_ups for db in row]).plot(ax=ax, color="green")
+    return distinctblock_ups, filtered_blockpoints_as_rows
 
 
 def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=None, showBlocks=False):
@@ -320,7 +506,7 @@ def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, cur
     
     """
 
-    blocks_as_rows = []
+    block_ups_as_rows = []
 
     for x in range(len(rows_of_bps)):
 
@@ -330,60 +516,58 @@ def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, cur
             bt = plotting_guide[x][y]
             up = unitPolygons[bt]
 
-            block = move_block_to_point(up, bp, rlppolygon)
+            block = up.move(blockpoint=bp, polygon_to_fit_inside=rlppolygon)
+            block_up = UnitPolygon(type=up.type, item_to_plot=block)
             if block is not None:
-                row.append(block)
+                row.append(block_up)
 
-        blocks_as_rows.append(row)
+        block_ups_as_rows.append(row)
+    
 
     smallest_up = unitPolygons[0]
     for up in unitPolygons:
-        if up.area < smallest_up.area:
+        if up.area() < smallest_up.area():
             smallest_up = up
     
     if current_plot:
-        appended_blocks = append_blocks(blocks_as_rows, current_plot)
+        appended_blocks = append_blocks(block_ups_as_rows, current_plot)
 
         distinctblocks = []
         for i in range(len(current_plot)):
             distinctblocks += [current_plot[i]+appended_blocks[i]]
         
-        
-        
     else:
-        distinctblocks = filter_blocks(blocks_as_rows, smallest_up, replaceSmall=True)
+        distinctblocks = filter_blocks(block_ups_as_rows, smallest_up, replaceSmall=True)
+        print("passed distinct")
 
     if showBlocks:
         geopandas.GeoSeries([block.exterior for row in distinctblocks for block in row]).plot(ax=ax, color="green")
     return distinctblocks
 
 
-def move_blocks_left(blocks_as_rows, rlppolygon, ax=None):
+def move_blocks_left(block_ups_as_rows, rlppolygon, ax=None):
     """Changes the input parameter to move all blocks left until they touch to open up space for more blocks.
     
     TODO: Move first point of each row to be closer to the edge of the polygon.
     
     """
 
-    for row in blocks_as_rows:
+    for row in block_ups_as_rows:
         # range(1, len(row)), but later will have separate way to make first block to touch the polygon inshaallah
         for i in range(1, len(row)):
             prev = row[i-1]
             cur = row[i]
 
-            init_point = cur.centroid
-            prev_point = prev.centroid
-
             try:
-                leq = LineFunctions.lineEQ((init_point.x, init_point.y), (prev_point.x, prev_point.y))
+                block = cur.move_to(prev)
             except:
-                print(init_point)
-                print(prev_point)
-                raise Exception
+                print("\n\n\n")
+                print("prev:")
+                print(prev.item_to_plot)
+                print("cur:")
+                print(cur.item_to_plot)
+                print("\n")
 
-            final_point = LineFunctions.point_from_distance(leq, (init_point.x, init_point.y), dist(prev, cur))
-
-            up = PolygonFunctions.centerAtOrigin(cur)
-            block = move_block_to_point(up, Point(final_point))
-
-            row[i] = block
+            # print("block:")
+            # print(block)
+            row[i] = UnitPolygon(type=cur.type, item_to_plot=block)

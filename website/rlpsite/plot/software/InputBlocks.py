@@ -22,14 +22,13 @@ X,Y = 0,1
 def centerDXFAtOrigin(dxf):
     """Moves the dxf until the origin is the mean of all of its points.
 
-    This assumes that the garden
-    
     *****ONLY WORKS FOR GDFs*****
     
     """
 
     center = unary_union(dxf.geometry).centroid
     def move(polygon):
+        if polygon==None: return None
         shiftcoords = [(coord[X]-center.x, coord[Y]-center.y) for coord in polygon.exterior.coords[:-1]]
         return Polygon(shiftcoords)
     dxf.geometry = dxf.geometry.apply(move)
@@ -101,7 +100,7 @@ def plotDXF(dxfblock, ax=None):
         geopandas.GeoSeries(parking).plot(ax=ax, color="grey")
 
 
-def dxf_parallel_to_ll(dxf, origin=True, point_about_rotation=None, longestline=None):
+def dxf_parallel_to_ll(dxf, center_at_origin=True, point_about_rotation=None, resultline=None):
     """Rotates the gdf until the house is parallel to the resultLine.
 
     The rotation is about the given point or the origin if it is not given.
@@ -125,11 +124,11 @@ def dxf_parallel_to_ll(dxf, origin=True, point_about_rotation=None, longestline=
         print("error when making dxf parallel to ll")
 
     polygonLine = LineString([house.exterior.coords[0], house.exterior.coords[1]])
-    resultAngle, changeAngle = LineFunctions.findAngle(longestline), LineFunctions.findAngle(polygonLine)
+    resultAngle, changeAngle = LineFunctions.findAngle(resultline), LineFunctions.findAngle(polygonLine)
 
     dxf.geometry = dxf.rotate(resultAngle-changeAngle, point_about_rotation, use_radians=True)
 
-    if origin:
+    if center_at_origin:
         centerDXFAtOrigin(dxf=dxf)
 
 

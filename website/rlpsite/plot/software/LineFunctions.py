@@ -161,9 +161,16 @@ def point_from_distance(leq, init_point, desired_distance, left_not_right=True):
 
     Returns (x,y).
 
+    "init_point" can be a tuple or a Point object.
+
     TODO: Fix so that a point right of the init point can be chosen over left
     
     """
+
+    try:
+        init_point = (init_point.x, init_point.y)
+    except:
+        pass
 
     x = init_point[X]
     y = lineyval(leq, x)

@@ -6,6 +6,7 @@ import geopandas.geoseries
 import matplotlib.pyplot as plt
 import geopandas
 import numpy as np
+from pandas import merge
 
 from shapely import Polygon, LineString, affinity, Point, intersection
 from shapely import distance as dist
@@ -75,23 +76,20 @@ def findPadding(unitPolygons, longestline):
         allups = []
 
         for up in unitPolygons:
-            up1 = up2 = Polygon( [(c[X]+originalx,c[Y]+originaly) for c in list(up.exterior.coords)] )
+            upcopy = up.copy()
+            up1 = up2 = upcopy.move(blockpoint=Point(originalx, originaly))
 
             x=0
-            while up1.intersects(up2):
+            while (True in list(up1.intersects(up2))):
                 x += increment
                 y = LineFunctions.lineyval(leq, x)
-                up2 = Polygon( [(c[X]+x,c[Y]+y) for c in list(up.exterior.coords)] )
+                up2 = upcopy.move(blockpoint=Point(x,y))
             
             distance = np.sqrt(np.square(x-originalx) + np.square(y-originaly))
             if padding<distance : padding = distance
 
             allups.append(up1)
             allups.append(up2)
-
-        if showDistance:
-            geopandas.GeoSeries([up.exterior for up in allups]).plot()
-            plt.show()
 
         return padding
 
@@ -117,12 +115,13 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
-    unitPolygons = [PolygonFunctions.rotatePolygon(LineString(longestline), uP, showRotation=False) for uP in unitPolygons]
-    unitPolygons = [PolygonFunctions.centerAtOrigin(uP, showTranslation=False) for uP in unitPolygons]
+    [up.rotate(line=longestline, should_be_centered=True) for up in unitPolygons]
+    print("PASSED ROTATION")
 
     horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
     blockpadding, rowpadding = findPadding(unitPolygons, longestline)
+    print("PASSED PADDING")
 
     fig, ax = plt.subplots()
 
@@ -132,6 +131,8 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     else:
         perpLines = BlockFunctions.blocklines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
         parallelLines = BlockFunctions.blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+    print("PASSED BLOCKLINES")
+    # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
     
     blockpoints = []
     rows_of_bps = []
@@ -143,12 +144,12 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
                 blockpoints.append(blockpoint)
                 row.append(blockpoint)
         rows_of_bps.append(row)
+    print("PASSED ROWS_OF_BPS")
 
-    # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
     
-    smallBlocks_as_rows, blockpoints_as_rows = BlockFunctions.initPlot(rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
+    smallBlocks_as_rows, blockpoints_as_rows = BlockFunctions.initPlot(False, rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
-
+    print("PASSED SMALLBLOCKS")
 
     new_blocks_as_rows = []
     no_change = 0
@@ -157,8 +158,10 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         
         plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
         new_blocks_as_rows = BlockFunctions.plotNewBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=new_blocks_as_rows, showBlocks=False)
-
-        BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
+        # BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
+        
+        print("NOT passed move left")
+        break
 
         sanitised_blocks = []
         for row in new_blocks_as_rows:
@@ -177,10 +180,23 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         if sizeprev==sizenew:
             no_change+=1
 
-    print(len([block.exterior for row in new_blocks_as_rows for block in row]))
+    # print(len([block.exterior for row in new_blocks_as_rows for block in row]))
 
-    geopandas.GeoSeries([block.exterior for row in new_blocks_as_rows for block in row]).plot(ax=ax, color="green")
+
+
+
+    
+
+    blocks_to_plot = [up.item_to_plot for row in new_blocks_as_rows for up in row]
+    
+    merged = blocks_to_plot[0]
+    for i in range( 1, len(blocks_to_plot) ):
+        merged = merge(left=merged, right=blocks_to_plot[i], how="outer")
+
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
+    InputBlocks.plotDXF(merged, ax=ax)
+    plt.show()
+    return
 
     return fig
 
@@ -189,16 +205,13 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 def example():
     rlp = getRLP(getPath())
     rlp = rlp.to_crs(epsg=27700)
-
     rlppolygon = rlp.geometry[0]
     
     mht = ManageBlockTypes()
+
     fillMHT(mht)
     blocktypes = mht.getBlockTypes()
-
     unitPolygons = makeUnitPolygons(blocktypes)
-    # unitPolygons =  [getUP()] + makeUnitPolygons(blocktypes)
-    print(unitPolygons)
 
     bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
     mht.addProportions(bestproportions)
@@ -206,29 +219,29 @@ def example():
     return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
 
 if not website_call:
-    # example()
-
+    mht = ManageBlockTypes()
 
     rlp = getRLP(getPath())
+    
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
-    fig, ax = plt.subplots()
 
     (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
     upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
+    unitPolygons = [upgdf]
+
+    # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
     
-    InputBlocks.plotDXF(upgdf.item_to_plot, ax=ax)
-
-    upgdf.move(Point(10,10))
-    upgdf.center_at_origin()
-    print(upgdf.intersects(shape=Point(100,200)))
-    InputBlocks.plotDXF(upgdf.item_to_plot, ax=ax)
-    
-    geopandas.GeoSeries(upgdf.centroid()).plot(ax=ax, color="black")
+    # for now, will set these to useless values until all other gdf functionality is checked
+    mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
+    bestproportions = [100]
+    mht.addProportions(bestproportions)
+    blocktypes = mht.getBlockTypes()
 
 
+    plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
 
-    plt.show()
+    # plt.show()
 
 
 def startplot(rlp, showCloseToOrigin=True):
