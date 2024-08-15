@@ -75,7 +75,7 @@ class UnitPolygon():
         
         Can be used to check if the whole moved geometry stays inside the polygon.
 
-        If any of the polygons don't fit, the original geometry is returned as a list
+        If any of the polygons don't fit, returns None.
         
         """
 
@@ -94,7 +94,7 @@ class UnitPolygon():
         if polygon_to_fit_inside:
             for b in blocks:
                 if not polygon_to_fit_inside.contains(b):
-                    return [p for p in geometry]
+                    return None
         return blocks
 
     
@@ -140,10 +140,10 @@ class UnitPolygon():
         
         elif self.type=="gdf" and not bp_is_gdf:
             result = self.__move_single_geometry(blockpoint=blockpoint, geometry=copyblock.geometry, polygon_to_fit_inside=polygon_to_fit_inside)
-            result = copyblock.geometry.apply(self.__move_single_polygon, args=[blockpoint, polygon_to_fit_inside, copyblock.geometry])
+            result = geopandas.GeoSeries(result, index=copyblock.geometry.index)
             copyblock.geometry = result
-
             return copyblock
+
         return None
 
 
