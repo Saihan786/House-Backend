@@ -516,9 +516,10 @@ def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, cur
             bt = plotting_guide[x][y]
             up = unitPolygons[bt]
 
-            block = up.move(blockpoint=bp, polygon_to_fit_inside=rlppolygon)
-            block_up = UnitPolygon(type=up.type, item_to_plot=block)
-            if block is not None:
+            block_dxf = up.move(blockpoint=bp, polygon_to_fit_inside=rlppolygon)
+            
+            if not None in list(block_dxf.geometry):
+                block_up = UnitPolygon(type=up.type, item_to_plot=block_dxf)
                 row.append(block_up)
 
         block_ups_as_rows.append(row)
@@ -560,14 +561,13 @@ def move_blocks_left(block_ups_as_rows, rlppolygon, ax=None):
 
             try:
                 block = cur.move_to(prev)
-            except:
+            except Exception as e:
                 print("\n\n\n")
+                print("Exception:", e)
                 print("prev:")
                 print(prev.item_to_plot)
                 print("cur:")
                 print(cur.item_to_plot)
                 print("\n")
 
-            # print("block:")
-            # print(block)
             row[i] = UnitPolygon(type=cur.type, item_to_plot=block)
