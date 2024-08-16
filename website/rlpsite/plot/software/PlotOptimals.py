@@ -132,7 +132,6 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         perpLines = BlockFunctions.blocklines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
         parallelLines = BlockFunctions.blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     print("PASSED BLOCKLINES")
-    # geopandas.GeoSeries(parallelLines+perpLines).plot(ax=ax, color="red")
     
     blockpoints = []
     rows_of_bps = []
@@ -149,7 +148,6 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     
     smallBlocks_as_rows, blockpoints_as_rows = BlockFunctions.initPlot(False, rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False)
     num_blocks = len( [bp for row in blockpoints_as_rows for bp in row] )
-    print("PASSED SMALLBLOCKS")
 
     new_blocks_as_rows = []
     no_change = 0
@@ -180,43 +178,30 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
         if sizeprev==sizenew:
             no_change+=1
         print("sizenew=", sizenew)
-
-    # print(len([block.exterior for row in new_blocks_as_rows for block in row]))
-
-
-
-
-    
-
+        break
     blocks_to_plot = [up.item_to_plot for row in new_blocks_as_rows for up in row]
+
+    # THIS ASSUMES ALL ITEMS ARE GDFS
     merged = blocks_to_plot[0]
     for i in range( 1, len(blocks_to_plot) ):
         merged = merge(left=merged, right=blocks_to_plot[i], how="outer")
 
+
+    houses = merged.loc[merged['Section'] == 'HOUSE NEW']
+    front_values = houses['MainPlot'].apply(InputBlocks.calc_front)
+    merged.loc[merged['Section'] == 'HOUSE NEW', 'Front'] = front_values
+    print(merged.loc[merged['Section'] == 'HOUSE NEW'])
+
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     InputBlocks.plotDXF(merged, ax=ax)
-    plt.show()
-    return
+
+    geopandas.GeoSeries(merged['Front']).plot(ax=ax, color="red")
+
 
     return fig
 
 
 
-def example():
-    rlp = getRLP(getPath())
-    rlp = rlp.to_crs(epsg=27700)
-    rlppolygon = rlp.geometry[0]
-    
-    mht = ManageBlockTypes()
-
-    fillMHT(mht)
-    blocktypes = mht.getBlockTypes()
-    unitPolygons = makeUnitPolygons(blocktypes)
-
-    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
-    mht.addProportions(bestproportions)
-
-    return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
 
 if not website_call:
     mht = ManageBlockTypes()
@@ -240,23 +225,35 @@ if not website_call:
 
 
     plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
-
-    # plt.show()
+    plt.show()
 
 
 def startplot(rlp, showCloseToOrigin=True):
+    mht = ManageBlockTypes()
+
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
     if showCloseToOrigin:
         rlppolygon = PolygonFunctions.moveToOrigin(rlppolygon)
     
-    mht = ManageBlockTypes()
-    fillMHT(mht)
+
+
+    # unitPolygons = makeUnitPolygons(blocktypes)
+    (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
+    upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
+    unitPolygons = [upgdf]
+
+
+    # fillMHT(mht)
+    # blocktypes = mht.getBlockTypes()
+    # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
+    # mht.addProportions(bestproportions)
+
+    # for now, will set these to useless values until all other gdf functionality is checked
+    mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
+    bestproportions = [100]
+    mht.addProportions(bestproportions)
     blocktypes = mht.getBlockTypes()
 
-    unitPolygons = makeUnitPolygons(blocktypes)
-
-    bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
-    mht.addProportions(bestproportions)
 
     return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)

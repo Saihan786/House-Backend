@@ -3,7 +3,7 @@
 import geopandas
 import matplotlib.pyplot as plt
 from shapely.ops import unary_union
-from shapely import LineString, Polygon
+from shapely import LineString, Polygon, Point
 
 try:
     from ..software import LineFunctions
@@ -58,8 +58,26 @@ def set_up_colors(dxfblock):
     dxfblock['colors']= colors
 
 
+def calc_front(house_polygon):
+    """Returns the Front value for the house.
+    
+    The Front value is the average of two vertices of an edge of the house as a Point object.
+    
+    The dxfblocks cannot be combined or merged yet for this method to work.
+    
+    """
+    
+    house_coords = house_polygon.exterior.coords
+    front_x = (house_coords[2][X]+house_coords[3][X]) / 2
+    front_y = (house_coords[2][Y]+house_coords[3][Y]) / 2
+    front_coords = ( front_x, front_y )
+    return Point(front_coords)
+
+
 def readDXF():
     """Reads dxf file to get the user-drawn block and cleans the data.
+
+    May add extra info to the dxf for plotting purposes (like 'Front'), and remove some info.
     
     Returns (dxfblock, gardens, parking, house)
     
@@ -72,9 +90,21 @@ def readDXF():
     set_up_colors(dxfblock=dxfblock)
     centerDXFAtOrigin(dxf=dxfblock)
 
+    dxfblock = dxfblock.rename(columns={'geometry': 'MainPlot'})
+    dxfblock = dxfblock.set_geometry('MainPlot')
+    dxfblock = dxfblock.drop('PaperSpace', axis=1)
+    dxfblock = dxfblock.drop('SubClasses', axis=1)
+    dxfblock = dxfblock.drop('Linetype', axis=1)
+    dxfblock = dxfblock.drop('EntityHandle', axis=1)
+    dxfblock = dxfblock.drop('Text', axis=1)
+    dxfblock = dxfblock.drop('geom_type', axis=1)
+
     gardens = dxfblock.loc[dxfblock.Layer == 'GARDEN'].geometry
     parking = dxfblock.loc[dxfblock.Layer == 'PARKING'].geometry
     house = dxfblock.loc[dxfblock.Layer == 'HOUSE NEW'].geometry
+
+    dxfblock = dxfblock.rename(columns={'Layer': 'Section'})
+    dxfblock['Front'] = None
 
     if gardens.size==1 and parking.size==1:
         flex_regions = [gardens, parking]
@@ -82,6 +112,7 @@ def readDXF():
 
     return (dxfblock, gardens, parking, house)
 (dxfblock, gardens, parking, house) = readDXF()
+print(dxfblock)
 
 
 def plotDXF(dxfblock, ax=None):
@@ -116,7 +147,7 @@ def dxf_parallel_to_ll(dxf, center_at_origin=True, point_about_rotation=None, re
     if point_about_rotation is None:
         point_about_rotation=(0,0)
 
-    house = dxf.loc[dxf.Layer == 'HOUSE NEW'].geometry
+    house = dxf.loc[dxf.Section == 'HOUSE NEW'].geometry
     if len(house) == 1:
         for actual_polygon in house:
             house = actual_polygon
