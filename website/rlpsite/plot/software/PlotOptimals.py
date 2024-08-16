@@ -153,32 +153,33 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 
     new_blocks_as_rows = []
     no_change = 0
+    counter=0
     while no_change < 5:
+        counter+=1
+        print("counter=", counter)
         prev_blocks = new_blocks_as_rows
         
         plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
         new_blocks_as_rows = BlockFunctions.plotNewBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=new_blocks_as_rows, showBlocks=False)
-        # BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
-        
-        print("NOT passed move left")
-        break
-
+        BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
+    
         sanitised_blocks = []
         for row in new_blocks_as_rows:
             trow = []
-            for block in row:
-                if rlppolygon.contains(block):
-                    trow.append(block)
+            for up in row:
+                if up.is_contained_by(rlppolygon):
+                    trow.append(up)
                 else:
                     print("block outside plot")
             sanitised_blocks.append(trow)
         new_blocks_as_rows=sanitised_blocks
 
-        sizeprev = len([block.exterior for row in prev_blocks for block in row])
-        sizenew = len([block.exterior for row in new_blocks_as_rows for block in row])
+        sizeprev = len([block for row in prev_blocks for block in row])
+        sizenew = len([block for row in new_blocks_as_rows for block in row])
 
         if sizeprev==sizenew:
             no_change+=1
+        print("sizenew=", sizenew)
 
     # print(len([block.exterior for row in new_blocks_as_rows for block in row]))
 
@@ -188,7 +189,6 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     
 
     blocks_to_plot = [up.item_to_plot for row in new_blocks_as_rows for up in row]
-    
     merged = blocks_to_plot[0]
     for i in range( 1, len(blocks_to_plot) ):
         merged = merge(left=merged, right=blocks_to_plot[i], how="outer")

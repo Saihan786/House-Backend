@@ -302,21 +302,22 @@ class UnitPolygon():
         UnitPolygon."""
 
     
-    # def is_contained_by(self, polygon):
-    #     """Checks if the item is contained inside the polygon.
+    def is_contained_by(self, polygon):
+        """Checks if the item is contained inside the polygon.
         
-    #     Can be used to check if the whole moved geometry stays inside the polygon.
+        Can be used to check if the whole moved geometry stays inside the polygon.
 
-    #     If any of the polygons don't fit, returns None.
+        If any of the polygons don't fit, returns None.
         
-    #     """
+        """
 
-    #     if self.type=="polygon":
-    #         return polygon.contains(self.item_to_plot)
-    #     elif self.type=="gdf":
-    #         for p in self.item_to_plot.geometry:
-    #             if not polygon.contains(p):
-    #                 return False
+        if self.type=="polygon":
+            return polygon.contains(self.item_to_plot)
+        elif self.type=="gdf":
+            for p in self.item_to_plot.geometry:
+                if not polygon.contains(p):
+                    return False
+            return True
 
         
 
@@ -432,7 +433,7 @@ def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):
     return distinctblocks
 
 
-def append_blocks(blocks_as_rows, current_plot):
+def append_blocks(block_ups_as_rows, current_plot):
     """Filters the blocks by removing the ones that overlap with current blocks.
     This essentially appends the blocks that can be appended.
 
@@ -449,31 +450,32 @@ def append_blocks(blocks_as_rows, current_plot):
 
     distinctblocks = []
 
-    for x in range(-1+len(blocks_as_rows)):
+    for x in range(-1+len(block_ups_as_rows)):
         row = []
-        for y in range(len( blocks_as_rows[x] )):
-            
-            block = blocks_as_rows[x][y]
+        for y in range(len( block_ups_as_rows[x] )):
+
+            block_up = block_ups_as_rows[x][y]
             keepBlock = True
+            shape_type = "UnitPolygon"
 
             current_row = current_plot[x]
             for cur in current_row:
-                if block.intersects(cur):
+                if block_up.intersects(cur, shape_type=shape_type):
                     keepBlock = False
             
-            prev = blocks_as_rows[x][y-1]
-            if block.intersects(prev):
+            prev = block_ups_as_rows[x][y-1]
+            if block_up.intersects(prev, shape_type=shape_type):
                 keepBlock=False
 
-            for nextrowblock in blocks_as_rows[x+1]:
-                if block.intersects(nextrowblock):
+            for nextrowblock in block_ups_as_rows[x+1]:
+                if block_up.intersects(nextrowblock, shape_type=shape_type):
                     keepBlock=False
 
             if keepBlock:
-                row.append(block)
+                row.append(block_up)
 
         distinctblocks.append(row)
-    distinctblocks.append( blocks_as_rows[ -1+len(blocks_as_rows) ] )
+    distinctblocks.append( block_ups_as_rows[ -1+len(block_ups_as_rows) ] )
 
     return distinctblocks
 
