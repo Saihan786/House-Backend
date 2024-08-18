@@ -16,7 +16,7 @@ website_call = False
 
 try:
     from .HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
-    from .RedLinePlot import getRLP, getPath
+    from .RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
     from ..software import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
     matplotlib.use('agg')
 
@@ -24,7 +24,7 @@ try:
 
 except ImportError:
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
-    from RedLinePlot import getRLP, getPath
+    from RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
     import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
 
 
@@ -102,7 +102,7 @@ def findPadding(unitPolygons, longestline):
     return (blockpadding, rowpadding)
 
 
-def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
+def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon, ax):
     """Plots all blocktypes on the rlp.
     
     The number of blocks of each bt depends on its proportion in proportions.
@@ -113,6 +113,7 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     
     """
 
+    # fig, ax = plt.subplots()
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
     [up.rotate(line=longestline, should_be_centered=True) for up in unitPolygons]
@@ -123,21 +124,20 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     blockpadding, rowpadding = findPadding(unitPolygons, longestline)
     print("PASSED PADDING")
 
-    fig, ax = plt.subplots()
 
     if horizontal_has_longest:
-        perpLines = BlockFunctions.blocklines(linePathX, blockpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
-        parallelLines = BlockFunctions.blocklines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perp_lines = BlockFunctions.blocklines(linePathX, blockpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
+        parallel_lines = BlockFunctions.blocklines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     else:
-        perpLines = BlockFunctions.blocklines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
-        parallelLines = BlockFunctions.blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
+        perp_lines = BlockFunctions.blocklines(linePathX, rowpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
+        parallel_lines = BlockFunctions.blocklines(linePathY, blockpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     print("PASSED BLOCKLINES")
     
     blockpoints = []
     rows_of_bps = []
-    for l1 in parallelLines:
+    for l1 in parallel_lines:
         row = []
-        for l2 in perpLines:
+        for l2 in perp_lines:
             blockpoint = intersection(l1, l2)
             if not blockpoint.is_empty:
                 blockpoints.append(blockpoint)
@@ -185,18 +185,12 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
     merged = blocks_to_plot[0]
     for i in range( 1, len(blocks_to_plot) ):
         merged = merge(left=merged, right=blocks_to_plot[i], how="outer")
+    InputBlocks.update_dxf_front(merged)
 
-
-    houses = merged.loc[merged['Section'] == 'HOUSE NEW']
-    front_values = houses['MainPlot'].apply(InputBlocks.calc_front)
-    merged.loc[merged['Section'] == 'HOUSE NEW', 'Front'] = front_values
-    print(merged.loc[merged['Section'] == 'HOUSE NEW'])
 
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     InputBlocks.plotDXF(merged, ax=ax)
-
-    geopandas.GeoSeries(merged['Front']).plot(ax=ax, color="red")
-
+    # geopandas.GeoSeries(merged['Front']).plot(ax=ax, color="red")
 
     return fig
 
@@ -206,25 +200,31 @@ def plotProportions(blocktypes, unitPolygons, proportions, rlppolygon):
 if not website_call:
     mht = ManageBlockTypes()
 
-    rlp = getRLP(getPath())
-    
-    rlp = rlp.to_crs(epsg=27700)
-    rlppolygon = rlp.geometry[0]
+    # gdfs = [ get_one_RLP(get_path_for_one_RLP()) ]
+    # print(gdfs)
+    gdfs = get_RLPs_from_directory_path(getPathForRoads())
+    print(gdfs)
 
-    (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
-    upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
-    unitPolygons = [upgdf]
+    fig, ax = plt.subplots()
+    for rlp in gdfs:
+        rlp = rlp.to_crs(epsg=27700)
+        rlppolygon = rlp.geometry[0]
 
-    # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
-    
-    # for now, will set these to useless values until all other gdf functionality is checked
-    mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
-    bestproportions = [100]
-    mht.addProportions(bestproportions)
-    blocktypes = mht.getBlockTypes()
+        (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
+        upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
+        unitPolygons = [upgdf]
+
+        
+        # for now, will set these to useless values until all other gdf functionality is checked
+        # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
+        mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
+        bestproportions = [100]
+        mht.addProportions(bestproportions)
+        blocktypes = mht.getBlockTypes()
+        mht.printBlockTypes()
 
 
-    plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
+        plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
     plt.show()
 
 
@@ -255,5 +255,5 @@ def startplot(rlp, showCloseToOrigin=True):
     mht.addProportions(bestproportions)
     blocktypes = mht.getBlockTypes()
 
-
-    return plotProportions(blocktypes, unitPolygons, bestproportions, rlppolygon)
+    fig, ax = plt.subplots()
+    return plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)

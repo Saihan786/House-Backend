@@ -196,7 +196,7 @@ def indexweightrandom(numspaces, blocktypes, rows, accuracy=0.005, showInfo=Fals
     # for now, just to see this artificial example
     # plot_chances = [0.5, 0.5]
     # plot_chances = [1.0, 0.0]
-    plot_chances = [1.0]
+    plot_chances = [1/(len(blocktypes)) for i in range( len(blocktypes) )]
 
 
     rng = random.default_rng()

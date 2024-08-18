@@ -541,7 +541,7 @@ def plotNewBlocks(rows_of_bps, unitPolygons, plotting_guide, ax, rlppolygon, cur
         row = []
         for y in range(len( rows_of_bps[x] )):
             bp = rows_of_bps[x][y]
-            bt = plotting_guide[x][y]
+            bt = min(plotting_guide[x][y], -1+len(unitPolygons))
             up = unitPolygons[bt]
 
             block_dxf = up.move(blockpoint=bp, polygon_to_fit_inside=rlppolygon)

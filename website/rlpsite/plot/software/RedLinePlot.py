@@ -5,22 +5,50 @@ from folium.plugins import Draw
 import webbrowser
 import os
 
-# returns path to datageojson file
-def getPath():
-    return "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/data.geojson"
 
-# returns red line plot as geopandas dataframe using given path
-def getRLP(path_to_rlp):
+def getPathForRoads():
+    """Returns paths to a directory containing all dgj files with roads."""
+
+    return "../House/geojsons/gjs_with_roads"
+
+
+def get_path_for_one_RLP():
+    """Returns path to datageojson file."""
+
+    return "../House/geojsons/1/data.geojson"
+
+
+def get_one_RLP(path_to_rlp):
+    """Returns red line plot as geopandas dataframe using given path."""
+
     return geopandas.read_file(path_to_rlp)
 
-# opens a graph using given path
-def openRLP(path_to_rlp):
-    rlp = geopandas.read_file(path_to_rlp)
-    rlp.plot()
+
+def openRLP(directory_path):
+    """Opens graphs for all datageojson files in the given directory path."""
+    
+    for dgj in os.listdir( directory_path ):
+        rlp_path = directory_path+'/'+dgj
+        rlp = geopandas.read_file(rlp_path)
+        rlp.plot()
     plt.show()
 
-# makes an empty world map to draw the red line plot on
+
+def get_RLPs_from_directory_path(directory_path):
+    """Returns a list of gdfs for each datageojson file in the given directory."""
+
+    gdfs = []
+    
+    for dgj in os.listdir( directory_path ):
+        rlp_path = directory_path+'/'+dgj
+        rlp = geopandas.read_file(rlp_path)
+        gdfs.append(rlp)
+    return gdfs
+
+
 def makeEmptyMap():
+    """Makes an empty world map to draw the red line plot on."""
+
     fmap = folium.Map(location=(51.5,0.127))
     Draw(export=True).add_to(fmap)
     fmap.save('map.html')
@@ -28,7 +56,8 @@ def makeEmptyMap():
 
 
 def main():
-    path_to_rlp = "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/data.geojson"
-    # openRLP(path_to_rlp)
+    path_to_rlp = "../House/geojsons/gjs_with_roads"
+    path_to_rlp = "../House/geojsons/1"
+    openRLP(path_to_rlp)
     # makeEmptyMap()
-main()
+# main()

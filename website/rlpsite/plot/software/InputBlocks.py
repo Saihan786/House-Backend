@@ -58,22 +58,6 @@ def set_up_colors(dxfblock):
     dxfblock['colors']= colors
 
 
-def calc_front(house_polygon):
-    """Returns the Front value for the house.
-    
-    The Front value is the average of two vertices of an edge of the house as a Point object.
-    
-    The dxfblocks cannot be combined or merged yet for this method to work.
-    
-    """
-    
-    house_coords = house_polygon.exterior.coords
-    front_x = (house_coords[2][X]+house_coords[3][X]) / 2
-    front_y = (house_coords[2][Y]+house_coords[3][Y]) / 2
-    front_coords = ( front_x, front_y )
-    return Point(front_coords)
-
-
 def readDXF():
     """Reads dxf file to get the user-drawn block and cleans the data.
 
@@ -180,6 +164,30 @@ def rotateNinety(dxf, origin=True, point_about_rotation=None):
 
     if origin:
         centerDXFAtOrigin(dxf=dxf)
+
+
+def calc_front(house_polygon):
+    """Returns the Front value for the house.
+    
+    The Front value is the average of two vertices of an edge of the house as a Point object.
+    
+    The dxfblocks cannot be combined or merged yet for this method to work.
+    
+    """
+    
+    house_coords = house_polygon.exterior.coords
+    front_x = (house_coords[2][X]+house_coords[3][X]) / 2
+    front_y = (house_coords[2][Y]+house_coords[3][Y]) / 2
+    front_coords = ( front_x, front_y )
+    return Point(front_coords)
+
+
+def update_dxf_front(dxf):
+    """Updates the 'Front' column for the houses in the dxf."""
+
+    houses = dxf.loc[dxf['Section'] == 'HOUSE NEW']
+    front_values = houses['MainPlot'].apply(calc_front)
+    dxf.loc[dxf['Section'] == 'HOUSE NEW', 'Front'] = front_values
     
 
 def get_dxf_as_gdf():
