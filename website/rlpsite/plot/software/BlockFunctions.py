@@ -369,26 +369,6 @@ def blocklines(path, distance, rlppolygon, pathIsHorizontal, ax=None, longestlin
             y-=distance
 
     return lines
-
-
-def move_block_to_point(up, blockpoint, rlppolygon=None):
-    """Returns a block that has been moved to the desired point.
-    
-    Optionally returns None if the block does not fit inside the polygon.
-
-    Requires that the up has center origin to begin with.
-    
-    """
-    
-    corners = []
-    for corner in up.exterior.coords[:-1]:
-        corners.append( (corner[X]+blockpoint.coords[0][X] , corner[Y]+blockpoint.coords[0][Y]) )
-    block = Polygon(corners)
-
-    if (not rlppolygon) or rlppolygon.contains(block):
-        return block
-    else:
-        return None
     
 
 def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):

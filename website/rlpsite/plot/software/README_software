@@ -1,0 +1,22 @@
+This textfile is used to describe the entire plotting process briefly.
+
+Plotting is done in a few stages, and "Main.py" is the file that manages the process.
+
+"Blocks" and "houses" are used somewhat interchangeably, but blocks are specifically a group of several houses, and a house usually
+includes its garden and parking region.
+
+For a greater understanding of everything involved, the "UnitPolygon" class and "InputBlocks.py" created as part of this project should be studied, and there should be a strong fundamental understanding of the "shapely", "geopandas", and "pandas" classes as heavy use is made of them.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+First, the user submits an RLP in the form of a data.geojson file. "Main.py" sets the RLP(s) as a shapely polygon LinearRing into
+the variable "gdfs" which will be iterated over. Each iteration will plot houses into the current gdf.
+
+To begin an iteration, "UnitPolygons" is then set up. A UnitPolygon is a shapely Polygon or a GeoDataFrame of Polygons. It is
+centered at the origin and whenever we want to plot a house at a new location, we use the original UnitPolygon and move a copy of
+it to the desired location. UnitPolygon is its own class for ease of relevant function usage. A less important class is "ManageBlockType" which is used to store information about each UnitPolygon which is rarely used in the plotting software. Finally, "plot_proportions_in_regions" is called, beginning the plotting process (region is the RLP currently being worked on).
+
+When beginning a single plotting process, the longest line of the region is determined and used frequently. UnitPolygons are made parallel to the longest line and "parallel_lines" and "perp_lines" are generated using it (). These two lists criss-cross over the region and the intersections are used as the first layer of houses. The padding between the intersections is also determined, and can be manually changed in order to make rows of houses closer (houses end up touching in the end so making houses along a row closer isn't useful).
+
+After generating the two lists, the intersections are assigned as a nested list [[],[],[]] to a variable to distinguish rows of houses. These blockpoints are used to make the first set of houses in the function "plotNewBlocks". If there are multiple types of UnitPolygon, they will be distributed in a weighted yet random process favouring the UnitPolygons with higher proportions (one of the rare uses of the ManageBlockType class). This distribution is passed in to plotNewBlocks. All blocks are then moved left until they touch each other, and the weighting and plotting part repeats until no more blocks can be plotted (alternatively, the initial plot moved left can be used if the "break" statement is uncommented).
+

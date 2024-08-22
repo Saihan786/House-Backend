@@ -1,5 +1,6 @@
-# don't consider budget or road costs
-# might be easier to work with one blocktype for now
+"""This file is used to set up the Unit Polygons, padding between them, and iteratively generate the blocks in their positions
+relative to the RLP."""
+
 
 import matplotlib
 import geopandas.geoseries
@@ -119,13 +120,13 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     [up.rotate(line=longestline, should_be_centered=True) for up in unitPolygons]
     print("PASSED ROTATION")
 
-    horizontal_has_longest, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
+    horizontal_path_has_longest_line, (linePathX, mX), (linePathY, mY) = PolygonFunctions.findLinePaths(rlppolygon, showPaths=False)
 
     blockpadding, rowpadding = findPadding(unitPolygons, longestline)
     print("PASSED PADDING")
 
 
-    if horizontal_has_longest:
+    if horizontal_path_has_longest_line:
         perp_lines = BlockFunctions.blocklines(linePathX, blockpadding, rlppolygon, pathIsHorizontal=True, ax=ax, longestline=longestline)
         parallel_lines = BlockFunctions.blocklines(linePathY, rowpadding, rlppolygon, pathIsHorizontal=False, ax=ax, longestline=longestline)            
     else:
@@ -178,7 +179,22 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
         if sizeprev==sizenew:
             no_change+=1
         print("sizenew=", sizenew)
-        break
+
+        # uncomment for a quicker, less useful answer.
+        # break
+
+
+    # FLEXING TIME
+    # for row in new_blocks_as_rows:
+    #     print(row)
+
+    # so when flexing a flex region, I've gotta check it doesn't overlap with its outer polygon, the houses +-1 of it in
+    #   its row, and with any house in the next or previous row.
+    # 
+    # To flex, I'll take any two consecutive corners of the garden (flex region) and change them by the same value.
+    #   When checking for overlaps, I'll check corners independently
+
+        
     blocks_to_plot = [up.item_to_plot for row in new_blocks_as_rows for up in row]
 
     # THIS ASSUMES ALL ITEMS ARE GDFS
@@ -191,69 +207,4 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     geopandas.GeoSeries(rlppolygon.exterior).plot(ax=ax, color="blue")
     InputBlocks.plotDXF(merged, ax=ax)
     # geopandas.GeoSeries(merged['Front']).plot(ax=ax, color="red")
-
-    return fig
-
-
-
-
-if not website_call:
-    mht = ManageBlockTypes()
-
-    # gdfs = [ get_one_RLP(get_path_for_one_RLP()) ]
-    # print(gdfs)
-    gdfs = get_RLPs_from_directory_path(getPathForRoads())
-    print(gdfs)
-
-    fig, ax = plt.subplots()
-    for rlp in gdfs:
-        rlp = rlp.to_crs(epsg=27700)
-        rlppolygon = rlp.geometry[0]
-
-        (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
-        upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
-        unitPolygons = [upgdf]
-
-        
-        # for now, will set these to useless values until all other gdf functionality is checked
-        # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
-        mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
-        bestproportions = [100]
-        mht.addProportions(bestproportions)
-        blocktypes = mht.getBlockTypes()
-        mht.printBlockTypes()
-
-
-        plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
-    plt.show()
-
-
-def startplot(rlp, showCloseToOrigin=True):
-    mht = ManageBlockTypes()
-
-    rlp = rlp.to_crs(epsg=27700)
-    rlppolygon = rlp.geometry[0]
-    if showCloseToOrigin:
-        rlppolygon = PolygonFunctions.moveToOrigin(rlppolygon)
-    
-
-
-    # unitPolygons = makeUnitPolygons(blocktypes)
-    (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
-    upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
-    unitPolygons = [upgdf]
-
-
-    # fillMHT(mht)
-    # blocktypes = mht.getBlockTypes()
-    # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
-    # mht.addProportions(bestproportions)
-
-    # for now, will set these to useless values until all other gdf functionality is checked
-    mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
-    bestproportions = [100]
-    mht.addProportions(bestproportions)
-    blocktypes = mht.getBlockTypes()
-
-    fig, ax = plt.subplots()
-    return plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
+    # geopandas.GeoSeries(parallel_lines+perp_lines).plot(ax=ax, color="red")

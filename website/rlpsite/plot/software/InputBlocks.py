@@ -66,7 +66,7 @@ def readDXF():
     Returns (dxfblock, gardens, parking, house)
     
     """
-
+    
 
     dxfblock = geopandas.read_file("C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/House_plotting_example.dxf")
     dxfblock['geom_type']= dxfblock.geometry.type
@@ -89,14 +89,12 @@ def readDXF():
 
     dxfblock = dxfblock.rename(columns={'Layer': 'Section'})
     dxfblock['Front'] = None
-
-    if gardens.size==1 and parking.size==1:
-        flex_regions = [gardens, parking]
-        flex_polygon = geopandas.GeoSeries(unary_union(flex_regions))
+    dxfblock['Flex'] = False
+    flex_regions = (dxfblock['Section']=='GARDEN') | (dxfblock['Section']=='PARKING')
+    dxfblock.loc[ flex_regions, 'Flex' ] = True
 
     return (dxfblock, gardens, parking, house)
 (dxfblock, gardens, parking, house) = readDXF()
-print(dxfblock)
 
 
 def plotDXF(dxfblock, ax=None):
@@ -187,6 +185,7 @@ def update_dxf_front(dxf):
 
     houses = dxf.loc[dxf['Section'] == 'HOUSE NEW']
     front_values = houses['MainPlot'].apply(calc_front)
+    print("fv =", front_values)
     dxf.loc[dxf['Section'] == 'HOUSE NEW', 'Front'] = front_values
     
 

@@ -1,16 +1,13 @@
-import bootstrap5.forms
 from django.shortcuts import render
 from django.template import loader
 
 from django.http import HttpResponse, HttpResponseRedirect
 
-from .software.PlotOptimals import startplot
+from .software.Main import startplot
 from .forms import RegionForm, ExampleForm
 
 import geopandas
 import mpld3
-
-import bootstrap5
 
 
 
