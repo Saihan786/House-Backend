@@ -106,7 +106,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Saihan - marshall.s15@hotmail.com - ![LinkedIn][https://www.linkedin.com/in/saihan-marshall/]
+Saihan - marshall.s15@hotmail.com - https://www.linkedin.com/in/saihan-marshall/
 
 Project Link: [House](https://github.com/Saihan786/House)
 
