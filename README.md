@@ -17,4 +17,4 @@ TO RUN:
 
 
 
-![alt text](https://github.com/Saihan786/House/main/images_for_README/map_page.png?raw=true)
+![Map Page](images_for_README/map_page.png)
