@@ -3,8 +3,6 @@
 <h3 align="center">AutoPlot</h3>
   <p align="center">
     Automatically plots houses in a user-provided region of space
-    <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
   </p>
 </div>
 
@@ -42,8 +40,8 @@ Welcome! This software works with .geojson files and has its own method of gener
 Feel free to browse the python files! For a better understanding of the plotting process (separate to the website), check out the file 'README_software' in the folder 'HOUSE/website/rlpsite/plot/software'.
 
 TO RUN:
-*The website can be run by cd'ing into 'HOUSE/website/rlpsite' and executing 'python manage.py runserver' into your terminal. The available pages are '/plot' and '/plot/generate'.
-*If you don't want to use the website, run the file 'HOUSE/website/rlpsite/plot/software/Main.py' after making your desired setup (a default one exists too, but isn't good for large RLPs).
+The website can be run by cd'ing into 'HOUSE/website/rlpsite' and executing 'python manage.py runserver' into your terminal. The available pages are '/plot' and '/plot/generate'.
+If you don't want to use the website, run the file 'HOUSE/website/rlpsite/plot/software/Main.py' after making your desired setup (a default one exists too, but isn't good for large RLPs).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -59,7 +57,7 @@ recommended.
    ```
    git clone https://github.com/Saihan786/House
    ```
-2. Install NPM packages
+2. Install pip packages
    ```
    pip install -r requirements.txt
    ```
@@ -72,7 +70,11 @@ recommended.
 ## Usage
 
 ![Map Page](images_for_README/map_page.png)
+<br>
+<br>
 ![Generator Page](images_for_README/zoom_out_plot_page.png)
+<br>
+<br>
 ![Zoomed-in generation](images_for_README/zoom_in_plot_page.png)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -106,6 +108,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Saihan - marshall.s15@hotmail.com - ![LinkedIn][https://www.linkedin.com/in/saihan-marshall/]
 
-Project Link: [Project](https://github.com/Saihan786/House)
+Project Link: [House](https://github.com/Saihan786/House)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
