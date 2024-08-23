@@ -1,65 +1,10 @@
-<!-- Welcome!
-
-This software aims to assist in plotting houses in a user-provided region of space. This works with .geojson files and has its own method of generating them, but users are welcome to submit their own. It is available in a website, but the website must be run locally as it is not hosted anywhere.
-
-The house plotter currently generates rows of houses parallel to the longest edge of the given region, optimised with iterative padding. I plan to add a road generator which will first divide the RLP into chunks, and then have a road touch each chunk and houses will be plotted in the resulting regions.
-
-The Prototype branches each serve their own purpose regarding this project, with more details in PLAN.txt. P1 is for creating user-defined houses, P2 is for generating house polygons and plotting them within the region, P3 is for optimisation of house placement (hopefully with regard to roads), and P4 is for providing a map (for user shapefile generation) and for building the website. Chronologically, the order was actually P4->P1->P2->P4(for the website)->P3.
-
-Feel free to browse the python files! For a better understanding of the plotting process (separate to the website), check out the file 'README_software' in the folder 'HOUSE/website/rlpsite/plot/software'.
-
-
-
-
-TO RUN:
-*The website can be run by cd'ing into 'HOUSE/website/rlpsite' and executing 'python manage.py runserver' into your terminal. The available pages are '/plot' and '/plot/generate'.
-*If you don't want to use the website, run the file 'HOUSE/website/rlpsite/plot/software/Main.py' after making your desired setup (a default one exists too, but isn't good for large RLPs). -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
-
-<!-- PROJECT SHIELDS -->
-[![Contributors][contributors-shield]][Saihan786]
-[![LinkedIn][linkedin-shield]][https://www.linkedin.com/in/saihan-marshall/]
-
-
-
-<h3 align="center">project_title</h3>
-
+<h3 align="center">AutoPlot</h3>
   <p align="center">
-    project_description
+    Automatically plots houses in a user-provided region of space
     <br />
     <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
@@ -92,7 +37,13 @@ TO RUN:
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+Welcome! This software works with .geojson files and has its own method of generating them, but users are welcome to submit their own. It is available in a website, but the website must be run locally as it is not hosted anywhere.
 
+Feel free to browse the python files! For a better understanding of the plotting process (separate to the website), check out the file 'README_software' in the folder 'HOUSE/website/rlpsite/plot/software'.
+
+TO RUN:
+*The website can be run by cd'ing into 'HOUSE/website/rlpsite' and executing 'python manage.py runserver' into your terminal. The available pages are '/plot' and '/plot/generate'.
+*If you don't want to use the website, run the file 'HOUSE/website/rlpsite/plot/software/Main.py' after making your desired setup (a default one exists too, but isn't good for large RLPs).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -121,8 +72,8 @@ recommended.
 ## Usage
 
 ![Map Page](images_for_README/map_page.png)
-![Generator Page](images_for_README/zoom_out_plot.png)
-![Zoomed-in generation](images_for_README/zoom_in_plot.png)
+![Generator Page](images_for_README/zoom_out_plot_page.png)
+![Zoomed-in generation](images_for_README/zoom_in_plot_page.png)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -153,8 +104,8 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Saihan - marshall.s15@hotmail.com
+Saihan - marshall.s15@hotmail.com - ![LinkedIn][https://www.linkedin.com/in/saihan-marshall/]
 
-Project Link: [https://github.com/Saihan786/House](https://github.com/Saihan786/House)
+Project Link: [Project](https://github.com/Saihan786/House)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
