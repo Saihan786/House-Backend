@@ -24,6 +24,7 @@ try:
     website_call = True
 
 except ImportError:
+    print("ignore previous import errors - PlotOptimals.py")
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
     import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
@@ -32,7 +33,14 @@ except ImportError:
 X, Y = 0, 1
 linep1idx, linep2idx = 0, 1
 
-def fillMHT(mht):
+def fillMHT(mht: ManageBlockTypes):
+    """
+    Adds basic examples to the given mht. Affects the argument given - does not return the result.
+
+    Args:
+        mht (ManageBlockTypes object)
+    """
+    
     mht.addNewBlockType("ht1", 100000, 0, 25, 30)
     mht.addNewBlockType("ht2", 150000, 0, 50, 50)
 
@@ -153,9 +161,11 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     new_blocks_as_rows = []
     no_change = 0
     counter=0
-    while no_change < 5:
+
+    print("\n\n-------------------------------------------------------------------------------------------------------------------")
+    while no_change < 5 and counter < 10:
         counter+=1
-        print("counter=", counter)
+        print("\ncounter=", counter)
         prev_blocks = new_blocks_as_rows
         
         plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
@@ -182,6 +192,7 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
 
         # uncomment for a quicker, less useful answer.
         # break
+    print("-------------------------------------------------------------------------------------------------------------------\n\n")
 
 
     # FLEXING TIME

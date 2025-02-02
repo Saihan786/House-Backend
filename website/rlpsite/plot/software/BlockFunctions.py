@@ -16,6 +16,7 @@ try:
     website_call = True
 
 except ImportError:
+    print("ignore previous import errors - BlockFunctions.py")
     import PolygonFunctions, LineFunctions, InputBlocks
 
 X, Y = 0, 1

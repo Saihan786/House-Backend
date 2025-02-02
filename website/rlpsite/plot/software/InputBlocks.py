@@ -1,15 +1,36 @@
-"""This file converts user-inputted blocks representing houses and their gardens and parking to unitPolygons used in PlotOptimals.py"""
+"""
+This file converts user-inputted blocks representing houses and their gardens and parking to unitPolygons used in PlotOptimals.py
+
+func:
+- centerDXFAtOrigin
+- set_up_colors
+- readDXF
+- plotDXF
+- dxf_parallel_to_ll
+- rotateNinety
+- calc_front
+- rotateNinety
+- update_dxf_front
+- get_dxf_as_gdf
+- get_dxf_separate
+"""
 
 import geopandas
-import matplotlib.pyplot as plt
 from shapely.ops import unary_union
 from shapely import LineString, Polygon, Point
 
 try:
     from ..software import LineFunctions
 except ImportError:
+    print("ignore previous import errors - InputBlocks.py")
     import LineFunctions
 
+GDF_NAME_FOR_HOUSE_SECTION = "HOUSE NEW"
+GDF_NAME_FOR_GARDEN_SECTION = "GARDEN"
+GDF_NAME_FOR_PARKING_SECTION = "PARKING"
+
+DXF_FILE_STRING = "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/dxf_files/triangle.dxf"
+# DXF_FILE_STRING = "C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/House_plotting_example.dxf"
 
 dxfblock = None
 gardens = None
@@ -35,40 +56,52 @@ def centerDXFAtOrigin(dxf):
 
 
 def set_up_colors(dxfblock):
-    """Adds a colors column to dxfblock which can be passed to the plot() method.
-    
-    This must be adjusted if the name of the expected layers change.
-    
+    """
+    Adds a colors column to your provided GeoDataFrame
+        - This must be adjusted if the name of the expected layers change.
+        - Enables you to pass your dxfblock to the "plotDXF" can be passed to the plot() method.
+        - Does nothing if no colors could be added.
+
+    Your GDF must contain at least one of the Layer names corresponding to this file's global GDF Section names.
+
+    Args:
+        dxfblock (GeoDataFrame)
     """
 
     colors = []
-
     for l in dxfblock['Layer']:
-        match l:
-            case 'GARDEN':
-                colors.append("green")
-            case 'HOUSE NEW':
-                colors.append("blue")
-            case 'PARKING':
-                colors.append("grey")
+        if l == GDF_NAME_FOR_HOUSE_SECTION:
+            colors.append("blue")
+        elif l is GDF_NAME_FOR_GARDEN_SECTION:
+            colors.append("green")
+        elif l is GDF_NAME_FOR_PARKING_SECTION:
+            colors.append("grey")
     
-    if len(colors)<3:
+    if not colors:
         print("error with setting up colors for the dxfblock.")
-    
-    dxfblock['colors']= colors
+    else:
+        dxfblock['colors']= colors
 
 
-def readDXF():
-    """Reads dxf file to get the user-drawn block and cleans the data.
+def readDXF(file_string_to_dxf: str = DXF_FILE_STRING) -> tuple[geopandas.GeoDataFrame, geopandas.GeoDataFrame, geopandas.GeoDataFrame]:
+    """
+    Reads dxf file to get the user-drawn block and cleans the data.
+        - Adds extra info to the dxf for plotting purposes (like 'Front'), and removes some info.
 
-    May add extra info to the dxf for plotting purposes (like 'Front'), and remove some info.
+    Args:
+        file_string_to_dxf (String): String containing the absolute path to the dxf file which represents your house file.
     
-    Returns (dxfblock, gardens, parking, house)
-    
+    Returns
+        (dxfblock, gardens, parking, house): Tuple containing GeoDataFrames for the overall block to be plotted, and its composite parts.
     """
     
+    import shapely
 
-    dxfblock = geopandas.read_file("C:/Users/Saihan Marshall/Documents/house stuff/house repo/House/House_plotting_example.dxf")
+    dxfblock = geopandas.read_file(file_string_to_dxf)
+    ls = dxfblock.geometry[0]
+    poly = shapely.get_geometry(shapely.polygonize( [ls] ), 0)
+    dxfblock = dxfblock.set_geometry(col=[poly], drop=True)
+    
     dxfblock['geom_type']= dxfblock.geometry.type
     dxfblock = dxfblock.loc[dxfblock.geom_type == 'Polygon']
     set_up_colors(dxfblock=dxfblock)
@@ -83,14 +116,14 @@ def readDXF():
     dxfblock = dxfblock.drop('Text', axis=1)
     dxfblock = dxfblock.drop('geom_type', axis=1)
 
-    gardens = dxfblock.loc[dxfblock.Layer == 'GARDEN'].geometry
-    parking = dxfblock.loc[dxfblock.Layer == 'PARKING'].geometry
-    house = dxfblock.loc[dxfblock.Layer == 'HOUSE NEW'].geometry
+    gardens = dxfblock.loc[dxfblock.Layer == GDF_NAME_FOR_GARDEN_SECTION].geometry
+    parking = dxfblock.loc[dxfblock.Layer == GDF_NAME_FOR_PARKING_SECTION].geometry
+    house = dxfblock.loc[dxfblock.Layer == GDF_NAME_FOR_HOUSE_SECTION].geometry
 
     dxfblock = dxfblock.rename(columns={'Layer': 'Section'})
     dxfblock['Front'] = None
     dxfblock['Flex'] = False
-    flex_regions = (dxfblock['Section']=='GARDEN') | (dxfblock['Section']=='PARKING')
+    flex_regions = (dxfblock['Section']==GDF_NAME_FOR_GARDEN_SECTION) | (dxfblock['Section']==GDF_NAME_FOR_PARKING_SECTION)
     dxfblock.loc[ flex_regions, 'Flex' ] = True
 
     return (dxfblock, gardens, parking, house)
@@ -129,7 +162,7 @@ def dxf_parallel_to_ll(dxf, center_at_origin=True, point_about_rotation=None, re
     if point_about_rotation is None:
         point_about_rotation=(0,0)
 
-    house = dxf.loc[dxf.Section == 'HOUSE NEW'].geometry
+    house = dxf.loc[dxf.Section == GDF_NAME_FOR_HOUSE_SECTION].geometry
     if len(house) == 1:
         for actual_polygon in house:
             house = actual_polygon
@@ -183,10 +216,10 @@ def calc_front(house_polygon):
 def update_dxf_front(dxf):
     """Updates the 'Front' column for the houses in the dxf."""
 
-    houses = dxf.loc[dxf['Section'] == 'HOUSE NEW']
+    houses = dxf.loc[dxf['Section'] == GDF_NAME_FOR_HOUSE_SECTION]
     front_values = houses['MainPlot'].apply(calc_front)
-    print("fv =", front_values)
-    dxf.loc[dxf['Section'] == 'HOUSE NEW', 'Front'] = front_values
+    # print("fv =", front_values)
+    dxf.loc[dxf['Section'] == GDF_NAME_FOR_HOUSE_SECTION, 'Front'] = front_values
     
 
 def get_dxf_as_gdf():

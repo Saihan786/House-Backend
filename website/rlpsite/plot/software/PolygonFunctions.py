@@ -12,6 +12,7 @@ try:
     use('agg')
 
 except ImportError:
+    print("ignore previous import errors - PolygonFunctions.py")
     import LineFunctions
 
 
