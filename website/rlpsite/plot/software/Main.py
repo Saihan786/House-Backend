@@ -1,9 +1,8 @@
-"""This is the main file that populates an RLP with Unit Polygons.
+"""
+This is the main file that populates an RLP with Unit Polygons.
 
 This file is used for both the website and the standalone software folder.
-
 """
-
 
 import matplotlib.pyplot as plt
 from matplotlib import use
@@ -19,20 +18,27 @@ try:
     website_call = True
 
 except ImportError:
+    print("ignore previous import errors - Main.py")
     from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
     from RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
-    from PlotOptimals import plot_proportions_in_region
+    import PlotOptimals
     import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
 
 
 
+# for now, will set these to useless values until all other gdf functionality is checked
+mht = ManageBlockTypes()
+# bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
+mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
+bestproportions = [100]
+mht.addProportions(bestproportions)
+blocktypes = mht.getBlockTypes()
+
+
 if not website_call:
-    mht = ManageBlockTypes()
 
     gdfs = [ get_one_RLP(get_path_for_one_RLP()) ]
-    # print(gdfs)
-    # gdfs = get_RLPs_from_directory_path(getPathForRoads())
-    print(gdfs)
+    gdfs = get_RLPs_from_directory_path(getPathForRoads())
 
     fig, ax = plt.subplots()
     for rlp in gdfs:
@@ -40,25 +46,16 @@ if not website_call:
         rlppolygon = rlp.geometry[0]
 
         (dxfblock, gardens, parking, house) = InputBlocks.readDXF()
+
         upgdf = BlockFunctions.UnitPolygon(type="gdf", item_to_plot=dxfblock)
         unitPolygons = [upgdf]
 
-        # for now, will set these to useless values until all other gdf functionality is checked
-        # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=True)
-        mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
-        bestproportions = [100]
-        mht.addProportions(bestproportions)
-        blocktypes = mht.getBlockTypes()
-        mht.printBlockTypes()
-
-
-        plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
+        PlotOptimals.plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
+        break
     plt.show()
 
 
 def startplot(rlp, showCloseToOrigin=True):
-    mht = ManageBlockTypes()
-
     rlp = rlp.to_crs(epsg=27700)
     rlppolygon = rlp.geometry[0]
     if showCloseToOrigin:
@@ -72,16 +69,10 @@ def startplot(rlp, showCloseToOrigin=True):
     unitPolygons = [upgdf]
 
 
-    # fillMHT(mht)
+    # PlotOptimals.fillMHT(mht)
     # blocktypes = mht.getBlockTypes()
     # bestproportions, profit = generateBestTypes(blocktypes, maxsize=rlppolygon.area, showResults=False)
     # mht.addProportions(bestproportions)
-
-    # for now, will set these to useless values until all other gdf functionality is checked
-    mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
-    bestproportions = [100]
-    mht.addProportions(bestproportions)
-    blocktypes = mht.getBlockTypes()
 
     fig, ax = plt.subplots()
     plot_proportions_in_region(blocktypes, unitPolygons, bestproportions, rlppolygon, ax=ax)
