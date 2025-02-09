@@ -16,8 +16,8 @@ func:
 """
 
 import geopandas
+import shapely
 from shapely.ops import unary_union
-from shapely import LineString, Polygon, Point
 
 try:
     from ..software import LineFunctions
@@ -51,7 +51,7 @@ def centerDXFAtOrigin(dxf):
     def move(polygon):
         if polygon==None: return None
         shiftcoords = [(coord[X]-center.x, coord[Y]-center.y) for coord in polygon.exterior.coords[:-1]]
-        return Polygon(shiftcoords)
+        return shapely.Polygon(shiftcoords)
     dxf.geometry = dxf.geometry.apply(move)
 
 
@@ -83,24 +83,29 @@ def set_up_colors(dxfblock):
         dxfblock['colors']= colors
 
 
-def readDXF(file_string_to_dxf: str = DXF_FILE_STRING) -> tuple[geopandas.GeoDataFrame, geopandas.GeoDataFrame, geopandas.GeoDataFrame]:
+def readDXF(file_string_to_dxf: str = DXF_FILE_STRING, convert_to_polygon: bool = True) -> tuple[geopandas.GeoDataFrame, geopandas.GeoDataFrame, geopandas.GeoDataFrame]:
     """
     Reads dxf file to get the user-drawn block and cleans the data.
         - Adds extra info to the dxf for plotting purposes (like 'Front'), and removes some info.
 
     Args:
-        file_string_to_dxf (String): String containing the absolute path to the dxf file which represents your house file.
+        file_string_to_dxf (str): String containing the absolute path to the dxf file which represents your house file.
+        convert_to_polygon (bool): Converts the shapes in the dxf geometry to polygons if True, does nothing otherwise.
     
     Returns
         (dxfblock, gardens, parking, house): Tuple containing GeoDataFrames for the overall block to be plotted, and its composite parts.
     """
     
-    import shapely
-
     dxfblock = geopandas.read_file(file_string_to_dxf)
-    ls = dxfblock.geometry[0]
-    poly = shapely.get_geometry(shapely.polygonize( [ls] ), 0)
-    dxfblock = dxfblock.set_geometry(col=[poly], drop=True)
+
+    if convert_to_polygon:
+        geometry_shapes = list(dxfblock.geometry)
+        new_geoms = []
+        for shape in geometry_shapes:
+            polygon = shapely.get_geometry(shapely.polygonize( [shape] ), 0)
+            new_geoms.append(polygon)
+
+        dxfblock = dxfblock.set_geometry(col=new_geoms, drop=True)
     
     dxfblock['geom_type']= dxfblock.geometry.type
     dxfblock = dxfblock.loc[dxfblock.geom_type == 'Polygon']
@@ -169,7 +174,7 @@ def dxf_parallel_to_ll(dxf, center_at_origin=True, point_about_rotation=None, re
     else:
         print("error when making dxf parallel to ll")
 
-    polygonLine = LineString([house.exterior.coords[0], house.exterior.coords[1]])
+    polygonLine = shapely.LineString([house.exterior.coords[0], house.exterior.coords[1]])
     resultAngle, changeAngle = LineFunctions.findAngle(resultline), LineFunctions.findAngle(polygonLine)
 
     dxf.geometry = dxf.rotate(resultAngle-changeAngle, point_about_rotation, use_radians=True)
@@ -210,7 +215,7 @@ def calc_front(house_polygon):
     front_x = (house_coords[2][X]+house_coords[3][X]) / 2
     front_y = (house_coords[2][Y]+house_coords[3][Y]) / 2
     front_coords = ( front_x, front_y )
-    return Point(front_coords)
+    return shapely.Point(front_coords)
 
 
 def update_dxf_front(dxf):
