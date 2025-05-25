@@ -1,14 +1,9 @@
 """This file converts user-inputted blocks representing houses and their gardens and parking to unitPolygons used in PlotOptimals.py"""
 
 import geopandas
-import matplotlib.pyplot as plt
 from shapely.ops import unary_union
 from shapely import LineString, Polygon, Point
-
-try:
-    from ..software import LineFunctions
-except ImportError:
-    import LineFunctions
+import LineFunctions
 
 
 dxfblock = None

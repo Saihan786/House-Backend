@@ -1,22 +1,13 @@
 """Supporting functions when working with blocks (an abstraction over polygons)."""
 
-import matplotlib
-import geopandas.geoseries
-import matplotlib.pyplot as plt
 import geopandas
-
-from shapely import Polygon, LineString, affinity, Point
+from shapely import Polygon, LineString, Point
 from shapely import distance as dist
 from shapely.ops import unary_union
 
-try:
-    from ..software import PolygonFunctions, LineFunctions, InputBlocks
-    matplotlib.use('agg')
-
-    website_call = True
-
-except ImportError:
-    import PolygonFunctions, LineFunctions, InputBlocks
+import InputBlocks
+import LineFunctions
+import PolygonFunctions
 
 X, Y = 0, 1
 linep1idx, linep2idx = 0, 1

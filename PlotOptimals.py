@@ -2,35 +2,20 @@
 relative to the RLP."""
 
 
-import matplotlib
-import geopandas.geoseries
-import matplotlib.pyplot as plt
 import geopandas
 import numpy as np
 from pandas import merge
-
-from shapely import Polygon, LineString, affinity, Point, intersection
-from shapely import distance as dist
+from shapely import Polygon, Point, intersection
+import BlockFunctions
+import HRGenerator
+import InputBlocks
+import LineFunctions
+import PolygonFunctions
 
 website_call = False
-
-
-try:
-    from .HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
-    from .RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
-    from ..software import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
-    matplotlib.use('agg')
-
-    website_call = True
-
-except ImportError:
-    from HRGenerator import ManageBlockTypes, generateBestTypes, generateBasicTypes, indexweightrandom
-    from RedLinePlot import get_one_RLP, get_path_for_one_RLP, get_RLPs_from_directory_path, getPathForRoads
-    import PolygonFunctions, LineFunctions, BlockFunctions, InputBlocks
-
-
 X, Y = 0, 1
 linep1idx, linep2idx = 0, 1
+
 
 def fillMHT(mht):
     mht.addNewBlockType("ht1", 100000, 0, 25, 30)
@@ -158,7 +143,7 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
         print("counter=", counter)
         prev_blocks = new_blocks_as_rows
         
-        plotting_guide = indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
+        plotting_guide = HRGenerator.indexweightrandom(numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows)
         new_blocks_as_rows = BlockFunctions.plotNewBlocks(blockpoints_as_rows, unitPolygons, plotting_guide, ax, rlppolygon, current_plot=new_blocks_as_rows, showBlocks=False)
         BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
     
