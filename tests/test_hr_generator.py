@@ -1,6 +1,6 @@
 """Tests classes and functions in HRGenerator.py"""
 
-import house_backend.src.HRGenerator as HRGenerator
+from src.blockfiles import HRGenerator
 
 
 def test_answer():
