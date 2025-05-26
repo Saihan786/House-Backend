@@ -34,7 +34,7 @@ for rlp in gdfs:
     # )
     mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
     bestproportions = [100]
-    mht.addProportions(bestproportions)
+    mht.setProportions(bestproportions)
     blocktypes = mht.getBlockTypes()
     mht.printBlockTypes()
 
@@ -62,13 +62,13 @@ def startplot(rlp, showCloseToOrigin=True):
     # bestproportions, profit = generateBestTypes(
     #   blocktypes, maxsize=rlppolygon.area, showResults=False
     # )
-    # mht.addProportions(bestproportions)
+    # mht.setProportions(bestproportions)
 
     # for now, will set these to useless values until all other gdf
     # functionality is checked
     mht.addNewBlockType("gdf1", 100000, 0, 25, 30)
     bestproportions = [100]
-    mht.addProportions(bestproportions)
+    mht.setProportions(bestproportions)
     blocktypes = mht.getBlockTypes()
 
     fig, ax = plt.subplots()
