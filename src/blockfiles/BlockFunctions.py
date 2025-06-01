@@ -1,30 +1,42 @@
-"""Supporting functions when working with blocks (an abstraction over polygons)."""
+"""Supporting functions when working with blocks (an abstraction over
+polygons)."""
 
+from __future__ import annotations
 import geopandas
 from shapely import Polygon, LineString, Point
 from shapely import distance as dist
 from shapely.ops import unary_union
+from typing import List, Optional, Union
 
-import InputBlocks
+import blockfiles.InputBlocks as InputBlocks
 import LineFunctions
 import PolygonFunctions
 
 X, Y = 0, 1
-linep1idx, linep2idx = 0, 1
+LINEP1, LINEP2 = 0, 1
 
 
 class UnitPolygon:
-    """An instance of this class represents one type of block that can be plotted.
+    """
+    An instance of this class represents one BlockType that can be plotted. It
+    can be plotted multiple times in a region.
 
-    This class is used to abstract over the idea of all functionalities associated with
-    unit polygons, like iterating through its coordinates or moving it around, while enabling
-    versatility of the actual "item_to_plot" being plotted.
-
-    The "item_to_plot" being plotted can either be a polygon or a gdf, for now.
-
+    Available methods:
+        - move
+        - move_to
+        - center_at_origin
+        - area
+        - centroid
+        - intersects
+        - rotate
+        - copy
+        - distance
+        - is_contained_by
     """
 
-    def __init__(self, type, item_to_plot) -> None:
+    def __init__(
+        self, type, item_to_plot: Union[Polygon, geopandas.GeoDataFrame]
+    ) -> None:
         """Determines what the "item_to_plot" being plotted is."""
 
         if type == "gdf":
@@ -35,17 +47,23 @@ class UnitPolygon:
         self.item_to_plot = item_to_plot
 
     def __move_single_polygon(
-        self, polygon, blockpoint, polygon_to_fit_inside=None, geometry=None
+        self,
+        polygon: Polygon,
+        blockpoint: Point,
+        polygon_to_fit_inside: Optional[Polygon] = None,
     ):
-        """Returns a single polygon moved to the desired location.
-
-        The polygon does not have to be the item of this class instance.
-
-        Returns None for empty Points.
-
-        If "polygon_to_fit_inside"=True and "geometry"=True, the entire geometry must fit inside the
+        """
+        If "polygon_to_fit_inside", the entire geometry must fit inside the
         polygon or None is returned for all its polygons.
 
+        Args:
+            - polygon (Polygon): Any polygon that you're moving.
+            - blockpoint (Point):
+            - polygon_to_fit_inside (Polygon):
+
+        Returns:
+            - None for empty Points.
+            - Else a single polygon moved to the desired location.
         """
 
         corners = []
@@ -57,7 +75,7 @@ class UnitPolygon:
                         corner[Y] + blockpoint.coords[0][Y],
                     )
                 )
-        except:
+        except Exception:
             return None
         block = Polygon(corners)
 
@@ -67,14 +85,22 @@ class UnitPolygon:
             return None
 
     def __move_single_geometry(
-        self, blockpoint, geometry, polygon_to_fit_inside=None
+        self,
+        blockpoint,
+        geometry,
+        polygon_to_fit_inside: Optional[Polygon] = None,
     ):
-        """Returns the whole moved geometry as a list.
+        """
+        Returns the whole moved geometry as a list.
 
-        Can be used to check if the whole moved geometry stays inside the polygon.
+        Can be used to check if the whole moved geometry stays inside the
+        polygon.
 
         If any of the polygons don't fit, returns None.
-
+        Returns:
+            - None if `polygon_to_fit_inside` AND no polygons in the geometry
+            fit inside the `polygon_to_fit_inside`.
+            - Else the blocks after being moved.
         """
 
         blocks = []
@@ -88,7 +114,7 @@ class UnitPolygon:
                             corner[Y] + blockpoint.coords[0][Y],
                         )
                     )
-            except:
+            except Exception:
                 return None
             block = Polygon(corners)
             blocks.append(block)
@@ -99,16 +125,25 @@ class UnitPolygon:
                     return None
         return blocks
 
-    def move(self, blockpoint, polygon_to_fit_inside=None):
-        """Returns a block that has been moved to the desired point. 'Blockpoint' is a Point() object or a gdf of Points.
+    def move(
+        self,
+        blockpoint: Union[Point, geopandas.GeoDataFrame],
+        polygon_to_fit_inside=None,
+    ):
+        """
+        Returns a block that has been moved to the desired point.
 
-        Cannot have a blockpoint which is a gdf while the item is a Polygon (returns None in this case).
-        For a gdf blockpoint, it must have a geometry that is the same dimension as the gdf item, or None is returned.
+        The block may be a single polygon or a *copy* gdf of polygons (to
+        prevent the item from changing).
 
-        The block may be a single polygon or a *copy* gdf of polygons (to prevent the item from changing).
-
-        Optionally returns None if the block does not fit inside the polygon.
-
+        Returns:
+            - None if `blockpoint` is a GeoDataFrame AND the item of this
+            instance is a GDF with the same dimension as `blockpoint`.
+            - None if `blockpoint` is a GeoDataFrame AND
+            `self.type`== "Polygon".
+            - None if `polygon_to_fit_inside` AND the moved block doesn't fit
+            inside `polygon_to_fit_inside`.
+            - Else block that has been moved to the desired point.
         """
 
         copyblock = self.item_to_plot.copy()
@@ -157,17 +192,19 @@ class UnitPolygon:
 
         return None
 
-    def move_to(self, up):
-        """Returns a block that touches the given UP. UP is a UnitPolygon.
+    def move_to(
+        self, up: UnitPolygon
+    ) -> Union[Polygon, geopandas.GeoDataFrame]:
+        """
+        Returns a block that touches the given `up`
 
-        The block may be a single polygon or a *copy* gdf of polygons (to prevent the item from changing).
-
-        Optionally returns None if the block does not fit inside the polygon.
+        The block may be a single polygon or a *copy* gdf of polygons (to
+        prevent the item from changing).
 
         Requires that the up has center origin to begin with.
 
+        # Optionally returns None if the block does not fit inside the polygon.
         WIP - FIX ALL CASES
-
         """
 
         block = None
@@ -325,12 +362,12 @@ class UnitPolygon:
         UnitPolygon."""
 
     def is_contained_by(self, polygon):
-        """Checks if the item is contained inside the polygon.
+        """
+        Checks if the item is contained inside the polygon.
 
         Can be used to check if the whole moved geometry stays inside the polygon.
 
         If any of the polygons don't fit, returns None.
-
         """
 
         if self.type == "polygon":
@@ -343,27 +380,33 @@ class UnitPolygon:
 
 
 def blocklines(
-    path, distance, rlppolygon, pathIsHorizontal, ax=None, longestline=None
-):
-    """Returns a list of all new lines, each from a point on the lines of the given path.
+    path, distance, rlppolygon, pathIsHorizontal, longestline
+) -> List[LineString]:
+    """
+    Returns a list of new lines that are perpendicular to the given `path`.
 
-    The points are equidistant from each other at a given distance.
-
-    The new lines have the given gradient m.
-
+    Args:
+        - path (): A list of lines. You want to make multiple perpendicular
+        lines from each of the lines in `path`.
+        - distance (int): The distance between each perpendicular line.
+        - rlppolygon (Polygon): The line is inside this polygon, and touches
+        both edges of the polygon.
+        - pathIsHorizontal (bool): If the path is mostly horizontal, then the
+        perpendicular lines will be more vertical.
+        - longestline (): New lines are made perpendicular to the longest line.
     """
 
     lines = []
-    p1 = path[0][linep1idx]
+    p1 = path[0][LINEP1]
 
-    lleq = LineFunctions.lineEQ(longestline[linep1idx], longestline[linep2idx])
+    lleq = LineFunctions.lineEQ(longestline[LINEP1], longestline[LINEP2])
     nleq = LineFunctions.normalLineEQ(lleq, p1)
 
     if pathIsHorizontal:
         x = p1[X]
 
         points = []
-        while x < path[-1 + len(path)][linep2idx][X]:
+        while x < path[-1 + len(path)][LINEP2][X]:
             y = LineFunctions.lineyval(lleq, x)
             points.append((x, y))
             point = (x, y)
@@ -378,7 +421,7 @@ def blocklines(
         y = p1[Y]
 
         points = []
-        while y > path[-1 + len(path)][linep2idx][Y]:
+        while y > path[-1 + len(path)][LINEP2][Y]:
             x = LineFunctions.linexval(nleq, y)
             points.append((x, y))
             point = (x, y)
@@ -393,12 +436,13 @@ def blocklines(
 
 
 def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):
-    """Filters the blocks by removing the ones that overlap with another block.
+    """
+    Filters the blocks by removing the ones that overlap with another block.
 
-    Returns filtered blocks as rows.
-
-    Returns filtered blockpoints_as_rows (under same condition as filtered blocks).
-
+    Returns:
+        - Filtered blocks as rows.
+        - Filtered blockpoints_as_rows (under same condition as filtered
+        blocks).
     """
 
     distinctblocks = []
@@ -406,7 +450,6 @@ def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):
     for x in range(-1 + len(block_ups_as_rows)):
         row = []
         for y in range(len(block_ups_as_rows[x])):
-
             block_up = block_ups_as_rows[x][y]
             keepBlock = True
             shape_type = "UnitPolygon"
@@ -436,18 +479,19 @@ def filter_blocks(block_ups_as_rows, smallest_up=None, replaceSmall=False):
 
 
 def append_blocks(block_ups_as_rows, current_plot):
-    """Filters the blocks by removing the ones that overlap with current blocks.
+    """
+    Filters the blocks by removing the ones that overlap with current blocks.
     This essentially appends the blocks that can be appended.
 
     "current_plot" must have the same number of rows as blocks_as_rows.
 
-    Returns filtered blocks as rows.
-
-    Returns filtered blockpoints_as_rows (under same condition as filtered blocks).
+    Returns:
+        - Filtered blocks as rows.
+        - Filtered blockpoints_as_rows (under same condition as filtered
+        blocks).
 
     *****WARNING*****
     *****PERFORMANCE ISSUE O(N^2) WHEN COMPARING b_a_r TO c_p*****
-
     """
 
     distinctblocks = []
@@ -482,16 +526,14 @@ def append_blocks(block_ups_as_rows, current_plot):
     return distinctblocks
 
 
-def initPlot(
-    make_smallblocks, rows_of_bps, unitPolygons, ax, rlppolygon, showInit=False
-):
-    """Returns blockpoints (as rows) that will be included in next iteration.
+def initPlot(make_smallblocks, rows_of_bps, unitPolygons, ax, showInit=False):
+    """
+    Returns blockpoints (as rows) that will be included in next iteration.
 
     Creates an initial plot which only uses the smallest blocktype.
 
-    This method is mostly just to see which blockpoints are not invalid for plotting
-    (like blockpoints that cause overlaps with the polygon).
-
+    This method is mostly just to see which blockpoints are not invalid for
+    plotting (like blockpoints that cause overlaps with the polygon).
     """
 
     smallest_up = unitPolygons[0]
@@ -509,7 +551,8 @@ def initPlot(
             newblockrow = []
             for blockpoint in row:
                 block = smallest_up.move(blockpoint=blockpoint)
-                # block = move_block_to_point(smallest_up, blockpoint, rlppolygon)
+                # block = move_block_to_point(smallest_up, blockpoint,
+                # rlppolygon)
                 if block is not None:
                     newblockrow.append(
                         UnitPolygon(type=smallest_up.type, item_to_plot=block)
@@ -544,25 +587,31 @@ def plotNewBlocks(
     current_plot=None,
     showBlocks=False,
 ):
-    """Plots a variety of blocktypes using weightedrandomness and a plotting guide.
+    """
+    Plots a variety of blocktypes using weightedrandomness and a plotting
+    guide.
+
+    Weighting is based on how much we want certain blocktypes to appear
+    compared to others, indicated by plotting_guide.
 
     Blocks cannot be placed if they cause overlap.
-
     """
 
     block_ups_as_rows = []
 
     for x in range(len(rows_of_bps)):
-
         row = []
         for y in range(len(rows_of_bps[x])):
             bp = rows_of_bps[x][y]
             bt = min(plotting_guide[x][y], -1 + len(unitPolygons))
             up = unitPolygons[bt]
 
-            block_dxf = up.move(blockpoint=bp, polygon_to_fit_inside=rlppolygon)
+            block_dxf = up.move(
+                blockpoint=bp,
+                polygon_to_fit_inside=rlppolygon,
+            )
 
-            if not None in list(block_dxf.geometry):
+            if None not in list(block_dxf.geometry):
                 block_up = UnitPolygon(type=up.type, item_to_plot=block_dxf)
                 row.append(block_up)
 
@@ -593,15 +642,17 @@ def plotNewBlocks(
     return distinctblocks
 
 
-def move_blocks_left(block_ups_as_rows, rlppolygon, ax=None):
-    """Changes the input parameter to move all blocks left until they touch to open up space for more blocks.
+def squash_blocks_left(block_ups_as_rows, ax=None):
+    """
+    Changes the input parameter to move all blocks left until they touch to
+    open up space for more blocks.
 
     TODO: Move first point of each row to be closer to the edge of the polygon.
-
     """
 
     for row in block_ups_as_rows:
-        # range(1, len(row)), but later will have separate way to make first block to touch the polygon inshaallah
+        # range(1, len(row)), but later will have separate way to make first
+        # block to touch the provided rlppolygon inshaallah
         for i in range(1, len(row)):
             prev = row[i - 1]
             cur = row[i]
