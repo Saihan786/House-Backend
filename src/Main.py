@@ -3,9 +3,9 @@ houses."""
 
 import matplotlib.pyplot as plt
 
-import BlockFunctions
-import HRGenerator
-import InputBlocks
+import blockfiles.BlockFunctions as BlockFunctions
+import blockfiles.HRGenerator as HRGenerator
+import blockfiles.InputBlocks as InputBlocks
 import PlotOptimals
 import PolygonFunctions
 import RedLinePlot

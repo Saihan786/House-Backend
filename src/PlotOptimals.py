@@ -5,9 +5,9 @@ import geopandas
 import numpy as np
 from pandas import merge
 from shapely import Polygon, Point, intersection
-import BlockFunctions
-import HRGenerator
-import InputBlocks
+import blockfiles.BlockFunctions as BlockFunctions
+import blockfiles.HRGenerator as HRGenerator
+import blockfiles.InputBlocks as InputBlocks
 import LineFunctions
 import PolygonFunctions
 
@@ -70,7 +70,9 @@ def findPadding(unitPolygons, longestline):
                 y = LineFunctions.lineyval(leq, x)
                 up2 = upcopy.move(blockpoint=Point(x, y))
 
-            distance = np.sqrt(np.square(x - originalx) + np.square(y - originaly))
+            distance = np.sqrt(
+                np.square(x - originalx) + np.square(y - originaly)
+            )
             if padding < distance:
                 padding = distance
 
@@ -88,7 +90,9 @@ def findPadding(unitPolygons, longestline):
     return (blockpadding, rowpadding)
 
 
-def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon, ax):
+def plot_proportions_in_region(
+    blocktypes, unitPolygons, proportions, rlppolygon, ax
+):
     """Plots all blocktypes on the rlp.
 
     The number of blocks of each bt depends on its proportion in proportions.
@@ -102,7 +106,10 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     # fig, ax = plt.subplots()
     longestline = PolygonFunctions.findLongestLine(rlppolygon)
 
-    [up.rotate(line=longestline, should_be_centered=True) for up in unitPolygons]
+    [
+        up.rotate(line=longestline, should_be_centered=True)
+        for up in unitPolygons
+    ]
     print("PASSED ROTATION")
 
     horizontal_path_has_longest_line, (linePathX, mX), (linePathY, mY) = (
@@ -161,20 +168,27 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     print("PASSED ROWS_OF_BPS")
 
     smallBlocks_as_rows, blockpoints_as_rows = BlockFunctions.initPlot(
-        False, rows_of_bps, unitPolygons, ax=ax, rlppolygon=rlppolygon, showInit=False
+        False,
+        rows_of_bps,
+        unitPolygons,
+        ax=ax,
+        rlppolygon=rlppolygon,
+        showInit=False,
     )
     num_blocks = len([bp for row in blockpoints_as_rows for bp in row])
 
     new_blocks_as_rows = []
     no_change = 0
     counter = 0
-    while no_change < 5:
+    while no_change < 2:
         counter += 1
         print("counter=", counter)
         prev_blocks = new_blocks_as_rows
 
         plotting_guide = HRGenerator.indexweightrandom(
-            numspaces=num_blocks, blocktypes=blocktypes, rows=blockpoints_as_rows
+            numspaces=num_blocks,
+            blocktypes=blocktypes,
+            rows=blockpoints_as_rows,
         )
         new_blocks_as_rows = BlockFunctions.plotNewBlocks(
             blockpoints_as_rows,
@@ -185,7 +199,7 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
             current_plot=new_blocks_as_rows,
             showBlocks=False,
         )
-        BlockFunctions.move_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
+        BlockFunctions.squash_blocks_left(new_blocks_as_rows, rlppolygon, ax=ax)
 
         sanitised_blocks = []
         for row in new_blocks_as_rows:
@@ -218,7 +232,9 @@ def plot_proportions_in_region(blocktypes, unitPolygons, proportions, rlppolygon
     # To flex, I'll take any two consecutive corners of the garden (flex region) and change them by the same value.
     #   When checking for overlaps, I'll check corners independently
 
-    blocks_to_plot = [up.item_to_plot for row in new_blocks_as_rows for up in row]
+    blocks_to_plot = [
+        up.item_to_plot for row in new_blocks_as_rows for up in row
+    ]
 
     # THIS ASSUMES ALL ITEMS ARE GDFS
     merged = blocks_to_plot[0]
